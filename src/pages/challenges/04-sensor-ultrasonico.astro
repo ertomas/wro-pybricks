@@ -1,0 +1,212 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={4}
+  slug="04-sensor-ultrasonico"
+  title="Sensor ultrasónico"
+  time="60 minutos"
+  difficulty={3}
+  objectives={[
+    'Medir distancias con el sensor ultrasónico',
+    'Detener el robot antes de colisionar con un obstáculo',
+    'Programar una maniobra de esquive automática',
+    'Entender las limitaciones del sensor (distancia mínima, ángulo)',
+  ]}
+  prevHref="/challenges/03-sensor-color"
+  prevTitle="Sensor de color"
+  nextHref="/challenges/05-mision-wro"
+  nextTitle="Misión WRO"
+/>
+
+<h2>🧠 Cómo funciona el sonar</h2>
+
+<p>
+  El sensor ultrasónico funciona igual que el sonar de un submarino o el eco de un murciélago:
+  emite un pulso de sonido de alta frecuencia (que los humanos no escuchamos) y
+  mide cuánto tarda en volver. Con eso calcula la distancia.
+</p>
+
+<div class="grid sm:grid-cols-2 gap-4 mb-6">
+  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+    <p class="text-sm font-bold text-slate-700 mb-2">✅ Qué detecta bien</p>
+    <ul class="text-sm text-slate-600 space-y-1">
+      <li class="flex items-start gap-2"><span class="text-green-500">▸</span><span>Paredes y objetos grandes</span></li>
+      <li class="flex items-start gap-2"><span class="text-green-500">▸</span><span>Objetos entre 5 cm y 200 cm</span></li>
+      <li class="flex items-start gap-2"><span class="text-green-500">▸</span><span>Superficies perpendiculares al sensor</span></li>
+    </ul>
+  </div>
+  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+    <p class="text-sm font-bold text-slate-700 mb-2">❌ Limitaciones</p>
+    <ul class="text-sm text-slate-600 space-y-1">
+      <li class="flex items-start gap-2"><span class="text-red-400">▸</span><span>Ángulo muerto: menos de 5 cm puede dar 0</span></li>
+      <li class="flex items-start gap-2"><span class="text-red-400">▸</span><span>Superficies muy inclinadas (el eco no vuelve)</span></li>
+      <li class="flex items-start gap-2"><span class="text-red-400">▸</span><span>Objetos muy pequeños o de material absorbente</span></li>
+    </ul>
+  </div>
+</div>
+
+<h2>💡 Parte 1 — Medir distancias</h2>
+
+<p>Guardá esto como <code class="bg-gray-100 px-1 rounded text-sm font-mono">medir_distancia.py</code> y presioná <kbd class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">F5</kbd>:</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>medir_distancia.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> UltrasonicSensor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+sensor = UltrasonicSensor(Port.D)  <span class="text-zinc-500"># ajustá el puerto</span>
+
+<span class="text-zinc-500"># Mostrar la distancia en cm en la pantalla</span>
+<span class="text-blue-400">while</span> <span class="text-orange-400">True</span>:
+    distancia_mm = sensor.distance()
+    distancia_cm = distancia_mm // <span class="text-orange-400">10</span>
+
+    hub.display.number(distancia_cm)
+
+    <span class="text-zinc-500"># Cambiar color según la distancia</span>
+    <span class="text-blue-400">if</span> distancia_mm &lt; <span class="text-orange-400">100</span>:     <span class="text-zinc-500"># menos de 10 cm → rojo</span>
+        hub.light.on(<span class="text-yellow-400">'red'</span>)
+    <span class="text-blue-400">elif</span> distancia_mm &lt; <span class="text-orange-400">300</span>:  <span class="text-zinc-500"># menos de 30 cm → amarillo</span>
+        hub.light.on(<span class="text-yellow-400">'yellow'</span>)
+    <span class="text-blue-400">else</span>:                     <span class="text-zinc-500"># lejos → verde</span>
+        hub.light.on(<span class="text-yellow-400">'green'</span>)
+
+    wait(<span class="text-orange-400">100</span>)</code></pre>
+</div>
+
+<div class="tip">
+  <p class="tip-title">💡 La unidad es milímetros</p>
+  <p>
+    <code>sensor.distance()</code> devuelve la distancia en <strong>milímetros</strong>, no en centímetros.
+    20 cm = 200 mm. Tené esto en cuenta al definir tu umbral de parada.
+  </p>
+</div>
+
+<h2>💡 Parte 2 — Frenar antes de colisionar</h2>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>freno_automatico.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> Motor, UltrasonicSensor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port, Direction, Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.robotics</span> <span class="text-blue-400">import</span> DriveBase
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+motor_izq = Motor(Port.A, Direction.COUNTERCLOCKWISE)
+motor_der = Motor(Port.B)
+robot = DriveBase(motor_izq, motor_der, wheel_diameter=<span class="text-orange-400">56</span>, axle_track=<span class="text-orange-400">112</span>)
+sensor = UltrasonicSensor(Port.D)
+
+DISTANCIA_FRENO = <span class="text-orange-400">200</span>   <span class="text-zinc-500"># frenar a 20 cm del obstáculo</span>
+VELOCIDAD = <span class="text-orange-400">200</span>         <span class="text-zinc-500"># mm/s de avance</span>
+
+hub.light.on(Color.GREEN)
+hub.speaker.beep(frequency=<span class="text-orange-400">440</span>, duration=<span class="text-orange-400">200</span>)
+
+<span class="text-blue-400">while</span> <span class="text-orange-400">True</span>:
+    distancia = sensor.distance()
+
+    <span class="text-blue-400">if</span> distancia &lt; DISTANCIA_FRENO:
+        <span class="text-zinc-500"># ¡Obstáculo detectado!</span>
+        robot.stop()
+        hub.light.on(Color.RED)
+        hub.speaker.beep(frequency=<span class="text-orange-400">880</span>, duration=<span class="text-orange-400">150</span>)
+        wait(<span class="text-orange-400">500</span>)
+
+        <span class="text-zinc-500"># Maniobra de esquive</span>
+        robot.straight(-<span class="text-orange-400">150</span>)       <span class="text-zinc-500"># retroceder 15 cm</span>
+        robot.turn(<span class="text-orange-400">45</span>)             <span class="text-zinc-500"># girar 45° a la derecha</span>
+        hub.light.on(Color.YELLOW)
+
+    <span class="text-blue-400">else</span>:
+        <span class="text-zinc-500"># Camino libre — avanzar</span>
+        robot.drive(VELOCIDAD, <span class="text-orange-400">0</span>)
+        hub.light.on(Color.GREEN)
+
+    wait(<span class="text-orange-400">50</span>)  <span class="text-zinc-500"># leer sensor 20 veces por segundo</span></code></pre>
+</div>
+
+<div class="warning">
+  <p class="warning-title">⚠️ Ajustá DISTANCIA_FRENO según la velocidad</p>
+  <p>
+    A mayor velocidad, el robot necesita más distancia para frenar.
+    Si el robot toca el obstáculo antes de detenerse, aumentá DISTANCIA_FRENO.
+    El valor correcto depende de la velocidad, el peso del robot y la superficie del suelo.
+  </p>
+</div>
+
+<h2>🎯 Tu challenge</h2>
+
+<div class="space-y-4 mb-6">
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">1</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Calibrá tu umbral</p>
+      <p class="text-sm text-gray-600">
+        ¿A qué distancia real empieza a frenar tu robot? Medilo con una regla.
+        ¿Es exactamente 20 cm o hay diferencia? ¿Por qué?
+      </p>
+    </div>
+  </div>
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">2</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Probá con distintos objetos</p>
+      <p class="text-sm text-gray-600">
+        ¿El robot detecta igual una caja de cartón que una botella de plástico?
+        ¿Y una hoja de papel? ¿Por qué puede haber diferencias?
+      </p>
+    </div>
+  </div>
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">3</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Mejorá el esquive</p>
+      <p class="text-sm text-gray-600">
+        El esquive actual gira 45° y sigue recto. Modificalo para que el robot
+        rodee el obstáculo completamente y retome la dirección original.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 04</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'El sensor mide distancias correctamente (verificado con regla, error < 1 cm)',
+      'El robot frena consistentemente antes de tocar el obstáculo',
+      'El umbral de freno está ajustado a la velocidad de su robot',
+      'El robot ejecuta una maniobra de esquive automática',
+      'Entienden por qué hay un ángulo muerto a muy corta distancia',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus — Esquive completo</h2>
+  <p>
+    Programá un esquive que rodee completamente el obstáculo y retome la dirección original.
+    Es decir: el robot esquiva, continúa recto, y eventualmente regresa al camino que traía.
+  </p>
+  <p class="text-sm mt-2">
+    Pista: necesitás mover el robot en <strong>U</strong> alrededor del obstáculo.
+    Pensá en cuántos giros y rectas necesitás para lograrlo.
+  </p>
+</div>

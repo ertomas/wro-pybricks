@@ -1,0 +1,271 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Panel del Profesor">
+  <div id="locked" class="max-w-sm mx-auto px-4 py-20 text-center">
+    <div class="text-5xl mb-4">🔒</div>
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Acceso Profesor</h1>
+    <p class="text-gray-500 mb-6 text-sm">Esta sección es solo para Tomas papá.</p>
+    <form id="login-form" class="flex flex-col gap-3">
+      <input
+        id="pwd-input"
+        type="password"
+        placeholder="Contraseña"
+        class="border border-gray-300 rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+      />
+      <button
+        type="submit"
+        class="bg-orange-500 text-white font-semibold py-3 rounded-xl hover:bg-orange-600 transition-colors"
+      >
+        Entrar
+      </button>
+      <p id="error-msg" class="text-red-500 text-sm hidden">Contraseña incorrecta.</p>
+    </form>
+  </div>
+
+  <div id="content" class="hidden max-w-3xl mx-auto px-4 py-10">
+
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-black text-gray-900">Panel del Profesor 📋</h1>
+        <p class="text-gray-500 mt-1">Seguimiento de Tomas · Gael · Juan Marcos</p>
+      </div>
+      <button id="logout-btn" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+        Cerrar sesión
+      </button>
+    </div>
+
+    <!-- Instrucciones de uso -->
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8 text-sm text-blue-800">
+      <strong>Cómo usar:</strong> Marcá los checkboxes a medida que el grupo completa cada ítem.
+      El progreso se guarda automáticamente en este navegador.
+      <button id="reset-btn" class="ml-2 underline text-blue-600 hover:text-blue-800">Borrar todo el progreso</button>
+    </div>
+
+    <!-- Challenges -->
+    {[
+      {
+        num: '00',
+        title: 'Setup del ambiente',
+        icon: '🛠️',
+        items: [
+          'Tienen Chrome o Edge instalado en la laptop',
+          'Conectaron el hub por USB y flashearon el firmware de Pybricks correctamente',
+          'Abrieron Pybricks Code y el hub aparece conectado por Bluetooth',
+          'Tienen VS Code instalado con la extensión Python',
+          'Crearon una carpeta de trabajo y abrieron VS Code en esa carpeta',
+          'Ejecutaron el programa de prueba y vieron la respuesta en el hub',
+        ],
+      },
+      {
+        num: '01',
+        title: 'Hola Hub',
+        icon: '💡',
+        items: [
+          'El programa se ejecuta sin errores',
+          'La pantalla 5×5 muestra texto correctamente',
+          'La luz de estado cambia de color',
+          'El parlante reproduce sonidos',
+          'Modificaron el código para mostrar el nombre del equipo',
+          'Completaron el bonus: secuencia de al menos 3 colores y una melodía propia',
+        ],
+      },
+      {
+        num: '02',
+        title: 'Movimiento básico',
+        icon: '🚗',
+        items: [
+          'El robot avanza y retrocede una distancia exacta de 30 cm (±2 cm)',
+          'El robot gira exactamente 90° y 180°',
+          'El cuadrado de 30×30 cm cierra con menos de 3 cm de error',
+          'Completaron el triángulo (bonus)',
+          'Midieron y ajustaron el wheel_diameter y axle_track para su robot específico',
+          'Entienden la diferencia entre robot.straight() y robot.drive()',
+        ],
+      },
+      {
+        num: '03',
+        title: 'Sensor de color',
+        icon: '🎨',
+        items: [
+          'El robot identifica correctamente al menos 4 colores distintos',
+          'Calibraron el umbral (threshold) para la pista que van a usar',
+          'El seguidor de línea funciona en una recta de 1 metro sin salirse',
+          'Entienden qué es el error de proporción y la ganancia',
+          'Ajustaron la velocidad y la ganancia para mejorar la precisión',
+          'Bonus: el robot sigue curvas suaves sin perder la línea',
+        ],
+      },
+      {
+        num: '04',
+        title: 'Sensor ultrasónico',
+        icon: '📡',
+        items: [
+          'El robot mide la distancia correctamente (verificado con regla)',
+          'El robot frena antes de colisionar con una pared a 20 cm',
+          'El robot retrocede y gira cuando detecta un obstáculo',
+          'El umbral de distancia está bien ajustado para su robot',
+          'Entienden por qué el sensor ultrasónico tiene ángulo muerto (muy cerca)',
+          'Bonus: el robot esquiva el obstáculo y retoma el camino original',
+        ],
+      },
+      {
+        num: '05',
+        title: 'Misión WRO',
+        icon: '🏆',
+        items: [
+          'El robot completa la misión de principio a fin sin intervención humana',
+          'El robot sale de la base y llega al área de misión',
+          'Sigue la línea correctamente en la sección de line following',
+          'Detecta y esquiva el obstáculo',
+          'Regresa a la zona de inicio',
+          'El tiempo de misión está registrado',
+          'Bonus: tiempo menor a 30 segundos',
+        ],
+      },
+    ].map((ch, chIdx) => (
+      <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm" id={`ch-${ch.num}`}>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="bg-orange-500 text-white text-sm font-black rounded-lg w-9 h-9 flex items-center justify-center">
+            {ch.num}
+          </div>
+          <span class="text-2xl">{ch.icon}</span>
+          <h2 class="text-lg font-bold text-gray-900">{ch.title}</h2>
+          <span class="ml-auto text-sm font-semibold text-gray-400" id={`score-${ch.num}`}></span>
+        </div>
+
+        <div class="space-y-2">
+          {ch.items.map((item, itemIdx) => (
+            <label class="flex items-start gap-3 cursor-pointer group py-1">
+              <input
+                type="checkbox"
+                data-ch={ch.num}
+                data-idx={itemIdx}
+                class="mt-0.5 w-4 h-4 rounded accent-orange-500 cursor-pointer flex-shrink-0"
+              />
+              <span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">{item}</span>
+            </label>
+          ))}
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+            Notas / Fecha
+          </label>
+          <textarea
+            rows="2"
+            data-notes={ch.num}
+            placeholder="Ej: Completado el 12/06/2025. El seguidor de línea necesita ajuste..."
+            class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-300 resize-none"
+          ></textarea>
+        </div>
+      </div>
+    ))}
+
+  </div>
+</BaseLayout>
+
+<script>
+  const PASSWORD = 'wro2025'; // Cambiá esta contraseña
+
+  const locked = document.getElementById('locked')!;
+  const content = document.getElementById('content')!;
+  const form = document.getElementById('login-form')!;
+  const input = document.getElementById('pwd-input') as HTMLInputElement;
+  const errorMsg = document.getElementById('error-msg')!;
+  const logoutBtn = document.getElementById('logout-btn')!;
+  const resetBtn = document.getElementById('reset-btn')!;
+
+  function unlock() {
+    sessionStorage.setItem('profe_auth', PASSWORD);
+    locked.classList.add('hidden');
+    content.classList.remove('hidden');
+    loadProgress();
+  }
+
+  function lock() {
+    sessionStorage.removeItem('profe_auth');
+    locked.classList.remove('hidden');
+    content.classList.add('hidden');
+  }
+
+  if (sessionStorage.getItem('profe_auth') === PASSWORD) {
+    unlock();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (input.value === PASSWORD) {
+      unlock();
+    } else {
+      errorMsg.classList.remove('hidden');
+      input.value = '';
+      input.focus();
+    }
+  });
+
+  logoutBtn.addEventListener('click', lock);
+
+  resetBtn.addEventListener('click', () => {
+    if (confirm('¿Borrar todo el progreso guardado?')) {
+      localStorage.removeItem('profe_progress');
+      localStorage.removeItem('profe_notes');
+      loadProgress();
+    }
+  });
+
+  function loadProgress() {
+    const progress: Record<string, boolean[]> = JSON.parse(localStorage.getItem('profe_progress') || '{}');
+    const notes: Record<string, string> = JSON.parse(localStorage.getItem('profe_notes') || '{}');
+
+    document.querySelectorAll<HTMLInputElement>('input[type=checkbox][data-ch]').forEach(cb => {
+      const ch = cb.dataset.ch!;
+      const idx = parseInt(cb.dataset.idx!);
+      cb.checked = progress[ch]?.[idx] ?? false;
+      updateScore(ch);
+    });
+
+    document.querySelectorAll<HTMLTextAreaElement>('textarea[data-notes]').forEach(ta => {
+      const ch = ta.dataset.notes!;
+      ta.value = notes[ch] ?? '';
+    });
+  }
+
+  function saveProgress() {
+    const progress: Record<string, boolean[]> = {};
+    document.querySelectorAll<HTMLInputElement>('input[type=checkbox][data-ch]').forEach(cb => {
+      const ch = cb.dataset.ch!;
+      const idx = parseInt(cb.dataset.idx!);
+      if (!progress[ch]) progress[ch] = [];
+      progress[ch][idx] = cb.checked;
+    });
+    localStorage.setItem('profe_progress', JSON.stringify(progress));
+  }
+
+  function saveNotes() {
+    const notes: Record<string, string> = {};
+    document.querySelectorAll<HTMLTextAreaElement>('textarea[data-notes]').forEach(ta => {
+      notes[ta.dataset.notes!] = ta.value;
+    });
+    localStorage.setItem('profe_notes', JSON.stringify(notes));
+  }
+
+  function updateScore(ch: string) {
+    const boxes = document.querySelectorAll<HTMLInputElement>(`input[data-ch="${ch}"]`);
+    const checked = Array.from(boxes).filter(b => b.checked).length;
+    const scoreEl = document.getElementById(`score-${ch}`);
+    if (scoreEl) scoreEl.textContent = `${checked}/${boxes.length}`;
+  }
+
+  document.querySelectorAll<HTMLInputElement>('input[type=checkbox][data-ch]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      saveProgress();
+      updateScore(cb.dataset.ch!);
+    });
+  });
+
+  document.querySelectorAll<HTMLTextAreaElement>('textarea[data-notes]').forEach(ta => {
+    ta.addEventListener('input', saveNotes);
+  });
+</script>

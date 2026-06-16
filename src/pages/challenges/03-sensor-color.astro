@@ -1,0 +1,213 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={3}
+  slug="03-sensor-color"
+  title="Sensor de color"
+  time="60 minutos"
+  difficulty={3}
+  objectives={[
+    'Leer colores y niveles de reflejo con el sensor de color',
+    'Tomar decisiones basadas en lo que detecta el sensor',
+    'Entender qué es el control proporcional',
+    'Implementar un seguidor de línea básico',
+  ]}
+  prevHref="/challenges/02-movimiento"
+  prevTitle="Movimiento básico"
+  nextHref="/challenges/04-sensor-ultrasonico"
+  nextTitle="Sensor ultrasónico"
+/>
+
+<h2>🧠 El sensor de color</h2>
+
+<p>
+  El sensor de color del SPIKE Prime hace dos cosas:
+  <strong>detecta colores</strong> (rojo, azul, verde, etc.) y
+  <strong>mide el reflejo de luz</strong> (qué tan brillante es la superficie, de 0 a 100).
+</p>
+
+<div class="grid sm:grid-cols-2 gap-4 mb-6">
+  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+    <div class="font-mono text-sm font-bold text-orange-600 mb-2">sensor.color()</div>
+    <p class="text-sm text-slate-700">
+      Devuelve el color detectado: <code>Color.RED</code>, <code>Color.BLUE</code>,
+      <code>Color.GREEN</code>, <code>Color.YELLOW</code>, <code>Color.BLACK</code>,
+      <code>Color.WHITE</code>, o <code>None</code> si no reconoce nada.
+    </p>
+    <p class="text-xs text-slate-500 mt-2">Bueno para: detectar objetos, zonas de color en la pista WRO.</p>
+  </div>
+  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+    <div class="font-mono text-sm font-bold text-orange-600 mb-2">sensor.reflection()</div>
+    <p class="text-sm text-slate-700">
+      Devuelve un número del <strong>0 al 100</strong>.
+      Negro ≈ 0, Blanco ≈ 100. Ideal para seguir líneas, donde la línea es negra
+      sobre fondo blanco.
+    </p>
+    <p class="text-xs text-slate-500 mt-2">Bueno para: line following, medir brillo del suelo.</p>
+  </div>
+</div>
+
+<h2>💡 Parte 1 — Detectar colores</h2>
+
+<p>Guardá esto como <code class="bg-gray-100 px-1 rounded text-sm font-mono">detector_color.py</code> y presioná <kbd class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">F5</kbd>:</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>detector_color.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> ColorSensor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port, Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+sensor = ColorSensor(Port.C)  <span class="text-zinc-500"># ajustá el puerto</span>
+
+<span class="text-zinc-500"># Bucle infinito: muestra color y reflejo en tiempo real</span>
+<span class="text-blue-400">while</span> <span class="text-orange-400">True</span>:
+    color = sensor.color()
+    reflejo = sensor.reflection()
+
+    <span class="text-zinc-500"># La pantalla muestra el nivel de reflejo (0-100)</span>
+    hub.display.number(reflejo)
+
+    <span class="text-zinc-500"># La luz de estado muestra el color detectado</span>
+    <span class="text-blue-400">if</span> color == Color.RED:
+        hub.light.on(Color.RED)
+    <span class="text-blue-400">elif</span> color == Color.BLUE:
+        hub.light.on(Color.BLUE)
+    <span class="text-blue-400">elif</span> color == Color.GREEN:
+        hub.light.on(Color.GREEN)
+    <span class="text-blue-400">elif</span> color == Color.YELLOW:
+        hub.light.on(Color.YELLOW)
+    <span class="text-blue-400">else</span>:
+        hub.light.on(Color.WHITE)
+
+    wait(<span class="text-orange-400">100</span>)</code></pre>
+</div>
+
+<p>
+  Ejecutá este programa y pasá el sensor por encima de diferentes superficies.
+  Fijate qué número muestra sobre el negro y qué número sobre el blanco.
+  <strong>Anotá esos valores</strong>, los vas a necesitar para el siguiente paso.
+</p>
+
+<div class="bg-white border border-gray-200 rounded-xl p-4 mb-6">
+  <p class="text-sm font-semibold text-gray-700 mb-3">Anotá tus mediciones:</p>
+  <div class="grid grid-cols-2 gap-3 text-sm">
+    <div class="bg-gray-900 text-white rounded-lg p-3 text-center">
+      <div class="text-gray-400 text-xs mb-1">Reflejo sobre NEGRO</div>
+      <div class="font-mono text-lg font-bold text-orange-400">≈ ___</div>
+    </div>
+    <div class="bg-gray-100 rounded-lg p-3 text-center">
+      <div class="text-gray-500 text-xs mb-1">Reflejo sobre BLANCO</div>
+      <div class="font-mono text-lg font-bold text-gray-800">≈ ___</div>
+    </div>
+  </div>
+  <p class="text-xs text-gray-500 mt-2">
+    El umbral (threshold) para el line follower es el punto medio entre estos dos valores.
+    Ejemplo: negro=5, blanco=85 → umbral = (5+85)/2 = <strong>45</strong>
+  </p>
+</div>
+
+<h2>💡 Parte 2 — Seguidor de línea</h2>
+
+<p>
+  El truco del seguidor de línea es el <strong>control proporcional</strong>:
+  calculamos qué tan lejos estamos de la línea (el "error") y giramos
+  proporcionalmente a ese error.
+</p>
+
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+  <p class="text-sm font-bold text-slate-800 mb-2">Cómo funciona:</p>
+  <div class="space-y-2 text-sm text-slate-700">
+    <div class="flex items-start gap-2">
+      <span class="text-orange-500 flex-shrink-0">▸</span>
+      <span>Si el sensor está sobre <strong>blanco</strong> (reflejo > umbral): el robot está a la <em>derecha</em> de la línea → tiene que girar izquierda (error positivo).</span>
+    </div>
+    <div class="flex items-start gap-2">
+      <span class="text-orange-500 flex-shrink-0">▸</span>
+      <span>Si el sensor está sobre <strong>negro</strong> (reflejo &lt; umbral): el robot está a la <em>izquierda</em> de la línea → tiene que girar derecha (error negativo).</span>
+    </div>
+    <div class="flex items-start gap-2">
+      <span class="text-orange-500 flex-shrink-0">▸</span>
+      <span>Si el error es <strong>grande</strong>, giramos mucho. Si es pequeño, giramos poco. Eso es control proporcional.</span>
+    </div>
+  </div>
+</div>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>line_follower.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> Motor, ColorSensor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port, Direction
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.robotics</span> <span class="text-blue-400">import</span> DriveBase
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+motor_izq = Motor(Port.A, Direction.COUNTERCLOCKWISE)
+motor_der = Motor(Port.B)
+robot = DriveBase(motor_izq, motor_der, wheel_diameter=<span class="text-orange-400">56</span>, axle_track=<span class="text-orange-400">112</span>)
+sensor = ColorSensor(Port.C)
+
+<span class="text-zinc-500"># ↓ Ajustá estos valores según tus mediciones</span>
+VELOCIDAD = <span class="text-orange-400">150</span>    <span class="text-zinc-500"># mm/s — empezá lento</span>
+UMBRAL = <span class="text-orange-400">45</span>       <span class="text-zinc-500"># punto medio entre negro y blanco</span>
+GANANCIA = <span class="text-orange-400">1.5</span>    <span class="text-zinc-500"># qué tan agresivo es el giro</span>
+
+<span class="text-blue-400">while</span> <span class="text-orange-400">True</span>:
+    reflejo = sensor.reflection()
+
+    <span class="text-zinc-500"># Calcular qué tan lejos estamos del borde de la línea</span>
+    error = reflejo - UMBRAL
+
+    <span class="text-zinc-500"># Corrección proporcional al error</span>
+    correccion = GANANCIA * error
+
+    <span class="text-zinc-500"># Mover: velocidad hacia adelante + corrección de giro</span>
+    robot.drive(VELOCIDAD, correccion)
+
+    wait(<span class="text-orange-400">10</span>)  <span class="text-zinc-500"># actualizar cada 10 ms</span></code></pre>
+</div>
+
+<div class="tip">
+  <p class="tip-title">🔧 Cómo ajustar la GANANCIA</p>
+  <p>
+    <strong>Ganancia muy baja:</strong> el robot corrige poco y se sale de la línea lentamente.<br/>
+    <strong>Ganancia muy alta:</strong> el robot oscila de un lado al otro muy rápido.<br/>
+    El valor correcto está entre estos dos extremos. Probá con 1.0 primero y ajustá de a 0.3.
+  </p>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 03</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'El sensor identifica correctamente los colores RED, BLUE, GREEN, YELLOW',
+      'Midieron y anotaron los valores de reflejo sobre negro y blanco',
+      'El seguidor de línea sigue 1 metro de línea recta sin salirse',
+      'Saben explicar qué es el error y la ganancia',
+      'Ajustaron UMBRAL y GANANCIA para que funcione bien en su pista',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus — Curvas</h2>
+  <p>El seguidor de línea básico funciona en rectas. Para curvas necesitás ajustar la velocidad:</p>
+  <ul class="space-y-1 text-sm mt-2">
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span>Reducí VELOCIDAD a 100 y aumentá GANANCIA a 2.0</span></li>
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span>Probá el seguidor en una pista con una curva cerrada de 90°</span></li>
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span>¿Cuál es la velocidad máxima con la que pueden seguir una curva sin perder la línea?</span></li>
+  </ul>
+</div>

@@ -1,0 +1,191 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={1}
+  slug="01-hola-hub"
+  title="Hola Hub"
+  time="20 minutos"
+  difficulty={1}
+  objectives={[
+    'Entender la estructura básica de un programa Pybricks',
+    'Controlar la luz de estado del hub',
+    'Usar el parlante para reproducir sonidos',
+    'Mostrar texto y números en la pantalla 5×5 del hub',
+  ]}
+  prevHref="/challenges/00-setup"
+  prevTitle="Setup del ambiente"
+  nextHref="/challenges/02-movimiento"
+  nextTitle="Movimiento básico"
+/>
+
+<h2>🧠 Conceptos clave</h2>
+
+<p>
+  Todo programa de Pybricks empieza igual: importamos las clases y funciones
+  que necesitamos, creamos el objeto <code class="bg-gray-100 px-1 rounded font-mono text-sm">hub</code>
+  y después escribimos las instrucciones.
+</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-6">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>estructura.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-zinc-500"># 1. Importaciones — decimos qué herramientas vamos a usar</span>
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+<span class="text-zinc-500"># 2. Creamos el hub — lo "activamos"</span>
+hub = PrimeHub()
+
+<span class="text-zinc-500"># 3. Instrucciones — lo que queremos que haga</span>
+hub.light.on(Color.GREEN)
+wait(<span class="text-orange-400">1000</span>)
+hub.light.off()</code></pre>
+</div>
+
+<div class="grid sm:grid-cols-3 gap-3 mb-6">
+  {[
+    ['hub.light', 'La luz de estado (botón central)', 'on(), off(), blink()'],
+    ['hub.speaker', 'El parlante integrado', 'beep(), play_notes()'],
+    ['hub.display', 'La pantalla de 5×5 LEDs', 'text(), number(), image()'],
+  ].map(([name, desc, methods]) => (
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+      <div class="font-mono text-sm font-bold text-slate-800 mb-1">{name}</div>
+      <div class="text-xs text-slate-600 mb-2">{desc}</div>
+      <div class="font-mono text-xs text-orange-600">{methods}</div>
+    </div>
+  ))}
+</div>
+
+<h2>💡 Programa principal</h2>
+
+<p>Guardá este código como <code class="bg-gray-100 px-1 rounded text-sm font-mono">hola_hub.py</code> en VS Code y presioná <kbd class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">F5</kbd>:</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>hola_hub.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+
+<span class="text-zinc-500"># Mostrar el nombre del equipo en la pantalla</span>
+hub.display.text(<span class="text-yellow-400">"WRO!"</span>, pause=<span class="text-orange-400">150</span>)
+
+<span class="text-zinc-500"># Encender la luz en verde</span>
+hub.light.on(Color.GREEN)
+
+<span class="text-zinc-500"># Reproducir dos tonos</span>
+hub.speaker.beep(frequency=<span class="text-orange-400">440</span>, duration=<span class="text-orange-400">300</span>)
+wait(<span class="text-orange-400">100</span>)
+hub.speaker.beep(frequency=<span class="text-orange-400">880</span>, duration=<span class="text-orange-400">500</span>)
+
+<span class="text-zinc-500"># Esperar y apagar</span>
+wait(<span class="text-orange-400">2000</span>)
+hub.light.off()</code></pre>
+</div>
+
+<div class="tip">
+  <p class="tip-title">💡 ¿Qué hace <code>pause=150</code>?</p>
+  <p>
+    <code>hub.display.text()</code> hace scroll del texto letra por letra.
+    El parámetro <code>pause</code> controla qué tan rápido pasa cada letra (en milisegundos).
+    Probá con 50 (muy rápido) y con 500 (muy lento).
+  </p>
+</div>
+
+<h2>🎨 Colores disponibles</h2>
+
+<div class="grid grid-cols-4 gap-2 mb-6">
+  {[
+    ['RED', 'bg-red-500'],
+    ['GREEN', 'bg-green-500'],
+    ['BLUE', 'bg-blue-500'],
+    ['YELLOW', 'bg-yellow-400'],
+    ['ORANGE', 'bg-orange-500'],
+    ['CYAN', 'bg-cyan-400'],
+    ['MAGENTA', 'bg-fuchsia-500'],
+    ['WHITE', 'bg-white border'],
+  ].map(([name, cls]) => (
+    <div class="flex flex-col items-center gap-1">
+      <div class={`w-8 h-8 rounded-full ${cls} border border-gray-200`}></div>
+      <span class="font-mono text-xs text-gray-600">{name}</span>
+    </div>
+  ))}
+</div>
+
+<h2>🎯 Tu challenge</h2>
+
+<p>Modificá el programa para que haga las siguientes tres cosas:</p>
+
+<div class="space-y-4 mb-6">
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">1</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Mostrar el nombre del equipo</p>
+      <p class="text-sm text-gray-600">Reemplazá "WRO!" por el nombre que elijan para su equipo.</p>
+    </div>
+  </div>
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">2</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Secuencia de 3 colores</p>
+      <p class="text-sm text-gray-600">
+        La luz de estado debe cambiar por 3 colores distintos, con 1 segundo en cada uno.
+        Usá un bucle <code class="font-mono text-xs bg-gray-100 px-1 rounded">for</code> para hacerlo más elegante:
+      </p>
+      <pre class="mt-2 bg-zinc-900 rounded-lg p-3 text-xs text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">for</span> color <span class="text-blue-400">in</span> [Color.RED, Color.BLUE, Color.GREEN]:
+    hub.light.on(color)
+    wait(<span class="text-orange-400">1000</span>)</code></pre>
+    </div>
+  </div>
+  <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
+    <span class="text-orange-500 font-bold text-lg">3</span>
+    <div>
+      <p class="font-semibold text-gray-900 mb-1">Mostrar un número en la pantalla</p>
+      <p class="text-sm text-gray-600">
+        Usá <code class="font-mono text-xs bg-gray-100 px-1 rounded">hub.display.number(42)</code>
+        para mostrar el número que quieran.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 01</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'El programa corre sin errores',
+      'La pantalla muestra el nombre del equipo',
+      'La luz cambia por al menos 3 colores distintos',
+      'El parlante reproduce al menos 2 sonidos diferentes',
+      'Saben explicar qué hace cada línea de código',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<!-- Bonus -->
+<div class="bonus-box">
+  <h2>⭐ Bonus — Melodía personalizada</h2>
+  <p>
+    Usá <code class="font-mono text-sm">hub.speaker.play_notes()</code> para reproducir una melodía real.
+    Las notas se escriben como strings con el nombre de la nota y la duración:
+  </p>
+  <pre class="bg-purple-900 rounded-xl p-3 text-xs text-purple-100 mt-3 overflow-x-auto"><code>hub.speaker.play_notes([<span class="text-yellow-300">"C4/4"</span>, <span class="text-yellow-300">"E4/4"</span>, <span class="text-yellow-300">"G4/4"</span>, <span class="text-yellow-300">"C5/2"</span>], tempo=<span class="text-orange-300">120</span>)</code></pre>
+  <p class="text-sm mt-2">
+    El formato es <code class="font-mono text-xs bg-purple-800 px-1 rounded">Nota+Octava/Duración</code>.
+    C4 = Do central, E4 = Mi, G4 = Sol. /4 = negra, /2 = blanca.
+    Intentá reproducir "Cumpleaños Feliz" o la melodía de Star Wars.
+  </p>
+</div>

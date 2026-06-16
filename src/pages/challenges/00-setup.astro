@@ -1,0 +1,264 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={0}
+  slug="00-setup"
+  title="Setup del ambiente"
+  time="45 minutos"
+  difficulty={0}
+  objectives={[
+    'Instalar Python y las herramientas necesarias en tu laptop',
+    'Configurar VS Code con autocompletado para Pybricks',
+    'Flashear el firmware de Pybricks en el hub SPIKE Prime (una sola vez)',
+    'Ejecutar tu primer programa desde VS Code con solo presionar F5',
+  ]}
+  nextHref="/challenges/01-hola-hub"
+  nextTitle="Hola Hub"
+/>
+
+<h2>🧠 Cómo funciona el flujo de trabajo</h2>
+
+<p>
+  Vamos a programar el robot <strong>completamente desde VS Code</strong> — sin usar ningún sitio web.
+  El flujo es simple:
+</p>
+
+<ol class="list-none space-y-3 mb-6">
+  {[
+    ['Escribís el código', 'en un archivo .py dentro de VS Code, con autocompletado inteligente'],
+    ['Presionás F5', 'VS Code envía el programa al hub por Bluetooth automáticamente'],
+    ['El hub lo ejecuta', 'el robot hace lo que le programaste'],
+  ].map(([paso, desc], i) => (
+    <li class="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
+      <span class="bg-orange-500 text-white font-black text-lg rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0">{i+1}</span>
+      <div>
+        <span class="font-bold text-gray-900">{paso}</span>
+        <span class="text-gray-600"> — {desc}</span>
+      </div>
+    </li>
+  ))}
+</ol>
+
+<div class="warning">
+  <p class="warning-title">⚠️ Única excepción: el firmware (se hace una sola vez)</p>
+  <p>
+    Para que el hub pueda correr Python necesita un firmware especial.
+    Lo instalamos una sola vez usando el web app de Pybricks. Después de eso,
+    <strong>nunca más necesitás abrir el navegador para programar</strong>.
+  </p>
+</div>
+
+<h2>📋 Paso a paso</h2>
+
+<div class="steps">
+
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <h4>Instalá Python 3.10 o más nuevo</h4>
+      <p>
+        Bajá Python desde <strong>python.org/downloads</strong> y ejecutá el instalador.
+      </p>
+      <p>
+        <strong>Importante:</strong> en la primera pantalla del instalador,
+        marcá la opción <strong>"Add Python to PATH"</strong> antes de hacer clic en Install.
+      </p>
+      <p>Para verificar que quedó bien, abrí PowerShell y escribí:</p>
+      <pre class="bg-zinc-900 rounded-xl p-3 text-sm text-zinc-100 overflow-x-auto"><code>python --version</code></pre>
+      <p>Tiene que mostrar algo como <code class="bg-gray-100 px-1 rounded text-sm font-mono">Python 3.12.x</code>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <h4>Instalá VS Code y las extensiones necesarias</h4>
+      <p>Bajá VS Code desde <strong>code.visualstudio.com</strong> e instalalo normalmente.</p>
+      <p>Después abrí VS Code y desde el panel de extensiones (<kbd>Ctrl+Shift+X</kbd>) instalá:</p>
+      <ul class="space-y-1 text-sm">
+        <li class="flex items-start gap-2"><span class="text-orange-500">▸</span><span><strong>Python</strong> — de Microsoft (extensión oficial con debugpy)</span></li>
+        <li class="flex items-start gap-2"><span class="text-orange-500">▸</span><span><strong>Pylance</strong> — de Microsoft (autocompletado inteligente)</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <h4>Creá la carpeta del proyecto y abrila en VS Code</h4>
+      <p>
+        Creá una carpeta donde van a guardar todos los programas del robot.
+        Por ejemplo: <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">C:\wro-robot\</code>
+      </p>
+      <p>En VS Code: <strong>Archivo → Abrir carpeta</strong> → seleccioná esa carpeta.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">4</div>
+    <div class="step-content">
+      <h4>Creá un entorno virtual e instalá los paquetes</h4>
+      <p>
+        Abrí la terminal integrada de VS Code (<kbd>Ctrl+`</kbd>) y ejecutá estos comandos uno por uno:
+      </p>
+      <pre class="bg-zinc-900 rounded-xl p-3 text-sm text-zinc-100 overflow-x-auto mb-2"><code><span class="text-zinc-500"># Crear el entorno virtual</span>
+py -3 -m venv .venv
+
+<span class="text-zinc-500"># Activarlo</span>
+.venv\Scripts\activate
+
+<span class="text-zinc-500"># Instalar los dos paquetes necesarios</span>
+pip install pybricks pybricksdev</code></pre>
+      <p>
+        Cuando termina, el prompt del terminal empieza con <code class="bg-gray-100 px-1 rounded text-sm font-mono">(.venv)</code>.
+      </p>
+      <div class="tip mt-2">
+        <p class="tip-title">💡 ¿Qué son estos paquetes?</p>
+        <p>
+          <code>pybricks</code> — le da a VS Code el autocompletado y la documentación de Pybricks.<br/>
+          <code>pybricksdev</code> — es la herramienta que conecta VS Code con el hub por Bluetooth y envía el código.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">5</div>
+    <div class="step-content">
+      <h4>Creá el archivo launch.json para poder usar F5</h4>
+      <p>
+        Creá la carpeta <code class="bg-gray-100 px-1 rounded text-sm font-mono">.vscode</code> dentro de tu carpeta de proyecto
+        y dentro creá el archivo <code class="bg-gray-100 px-1 rounded text-sm font-mono">launch.json</code> con este contenido:
+      </p>
+      <pre class="bg-zinc-900 rounded-xl p-3 text-sm text-zinc-100 overflow-x-auto"><code>{`{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "▶ Ejecutar en el Hub",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pybricksdev",
+            "console": "integratedTerminal",
+            "args": ["run", "ble", "\${file}"]
+        }
+    ]
+}`}</code></pre>
+      <p>
+        A partir de ahora, con cualquier archivo <code>.py</code> abierto, presionás
+        <kbd class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">F5</kbd>
+        y VS Code lo envía al hub automáticamente.
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">6</div>
+    <div class="step-content">
+      <h4>Flasheá el firmware de Pybricks (una sola vez, requiere Chrome/Edge)</h4>
+      <p>
+        Este es el único paso que requiere el navegador. Lo hacés una sola vez y listo.
+      </p>
+      <ol class="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-2">
+        <li>Conectá el hub a la laptop con el cable USB incluido en el set</li>
+        <li>Abrí <strong>code.pybricks.com</strong> en Chrome o Microsoft Edge</li>
+        <li>Hacé clic en el ícono ⚙️ → <strong>Install Pybricks firmware</strong></li>
+        <li>El navegador pide permiso para acceder al USB → aceptá</li>
+        <li>Esperá hasta que termine (barra al 100%)</li>
+        <li>El hub se reinicia solo — ya tiene Pybricks</li>
+        <li>Desconectá el cable USB</li>
+      </ol>
+      <div class="warning mt-3">
+        <p class="warning-title">⚠️ No desconectes el cable mientras instala</p>
+        <p>Si se interrumpe el proceso, el hub puede quedar en modo DFU (parpadea rojo). Repetí el proceso desde el principio.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">7</div>
+    <div class="step-content">
+      <h4>Probá el setup completo con tu primer programa</h4>
+      <p>Encendé el hub (botón central). Va a parpadear esperando conexión.</p>
+      <p>
+        Creá un nuevo archivo en VS Code llamado <code class="bg-gray-100 px-1 rounded text-sm font-mono">prueba.py</code>
+        y pegá este código:
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>prueba.py</span>
+    <span>Abrí este archivo y presioná F5</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+
+<span class="text-zinc-500"># Si este programa funciona, el setup está completo ✓</span>
+hub.light.on(Color.GREEN)
+hub.speaker.beep(frequency=<span class="text-orange-400">440</span>, duration=<span class="text-orange-400">500</span>)
+hub.display.text(<span class="text-yellow-400">"OK!"</span>)
+wait(<span class="text-orange-400">2000</span>)
+hub.light.off()</code></pre>
+</div>
+
+<p>
+  Presioná <kbd class="bg-gray-200 px-2 py-0.5 rounded text-sm font-mono">F5</kbd>.
+  En la terminal de VS Code vas a ver que se conecta al hub por Bluetooth y sube el programa.
+  El hub enciende la luz verde, hace un pitido y muestra "OK!".
+</p>
+
+<div class="tip">
+  <p class="tip-title">💡 Primera vez que presionás F5</p>
+  <p>
+    VS Code puede preguntarte qué configuración usar. Elegí <strong>"▶ Ejecutar en el Hub"</strong>.
+    Las próximas veces ya lo recuerda.
+  </p>
+</div>
+
+<div class="tip">
+  <p class="tip-title">💡 ¿El autocompletado no funciona?</p>
+  <p>
+    Abrí la paleta de comandos (<kbd>Ctrl+Shift+P</kbd>), buscá
+    <strong>"Python: Select Interpreter"</strong> y elegí el que dice <code>.venv</code>.
+    Después reiniciá el servidor de lenguaje: buscá <strong>"Python: Restart Language Server"</strong>.
+  </p>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 00</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'Python 3.10+ instalado (python --version funciona en la terminal)',
+      'VS Code instalado con extensiones Python y Pylance',
+      'Carpeta de proyecto creada con entorno virtual (.venv)',
+      'pybricks y pybricksdev instalados (pip install funcionó)',
+      'Archivo .vscode/launch.json creado correctamente',
+      'Firmware Pybricks instalado en el hub (una sola vez con Chrome/Edge)',
+      'Programa de prueba ejecutado con F5: luz verde ✓ pitido ✓ texto "OK!" ✓',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus — Autocompletado</h2>
+  <p>
+    Con el setup completo, VS Code ahora conoce toda la API de Pybricks.
+    Creá un archivo nuevo, escribí <code class="font-mono text-sm">hub.</code>
+    y esperá un segundo. VS Code va a mostrar todas las opciones disponibles con
+    descripción. Explorá <code>hub.display.</code>, <code>hub.speaker.</code>, <code>hub.imu.</code>.
+  </p>
+</div>

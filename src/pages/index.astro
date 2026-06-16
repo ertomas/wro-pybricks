@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const challenges = [
+  {
+    num: '00',
+    slug: '00-setup',
+    title: 'Setup del ambiente',
+    desc: 'Instalá las herramientas, flasheá el firmware y conectá tu primer hub.',
+    time: '45 min',
+    difficulty: 0,
+    icon: '🛠️',
+    tag: 'Primero esto',
+    tagColor: 'bg-slate-600',
+  },
+  {
+    num: '01',
+    slug: '01-hola-hub',
+    title: 'Hola Hub',
+    desc: 'Tu primer programa: luces, sonido y texto en la pantalla del hub.',
+    time: '20 min',
+    difficulty: 1,
+    icon: '💡',
+    tag: 'Principiante',
+    tagColor: 'bg-green-600',
+  },
+  {
+    num: '02',
+    slug: '02-movimiento',
+    title: 'Movimiento básico',
+    desc: 'Hacé que tu robot avance, retroceda y gire con precisión milimétrica.',
+    time: '40 min',
+    difficulty: 2,
+    icon: '🚗',
+    tag: 'Fácil',
+    tagColor: 'bg-blue-600',
+  },
+  {
+    num: '03',
+    slug: '03-sensor-color',
+    title: 'Sensor de color',
+    desc: 'Detectá colores y hacé que tu robot siga una línea como los autos autónomos.',
+    time: '60 min',
+    difficulty: 3,
+    icon: '🎨',
+    tag: 'Intermedio',
+    tagColor: 'bg-orange-500',
+  },
+  {
+    num: '04',
+    slug: '04-sensor-ultrasonico',
+    title: 'Sensor ultrasónico',
+    desc: 'Medí distancias con sonar y programá al robot para que esquive obstáculos.',
+    time: '60 min',
+    difficulty: 3,
+    icon: '📡',
+    tag: 'Intermedio',
+    tagColor: 'bg-orange-500',
+  },
+  {
+    num: '05',
+    slug: '05-mision-wro',
+    title: 'Misión WRO',
+    desc: 'Challenge final: combiná todo lo aprendido en una misión estilo WRO real.',
+    time: '90 min',
+    difficulty: 4,
+    icon: '🏆',
+    tag: 'Avanzado',
+    tagColor: 'bg-red-600',
+  },
+];
+---
+
+<BaseLayout title="Inicio">
+
+  <!-- Hero -->
+  <section class="bg-slate-900 text-white py-16 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <div class="text-6xl mb-4">🤖</div>
+      <h1 class="text-4xl font-black mb-3 leading-tight">
+        WRO Pybricks <span class="text-orange-400">Challenges</span>
+      </h1>
+      <p class="text-slate-300 text-lg mb-6">
+        Programá tu robot LEGO SPIKE Prime con Python y preparate para la competencia.
+      </p>
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        {['Tomas', 'Gael', 'Juan Marcos'].map(name => (
+          <span class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-full text-sm font-medium">
+            👤 {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Callout antes de empezar -->
+  <div class="max-w-3xl mx-auto px-4 mt-8">
+    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-5 flex items-start gap-4">
+      <span class="text-2xl flex-shrink-0">⚠️</span>
+      <div>
+        <p class="font-bold text-orange-800 mb-1">¿Primera vez? Empezá por el Challenge 00.</p>
+        <p class="text-orange-700 text-sm">
+          Antes de escribir código necesitás preparar tu computadora e instalar el firmware de Pybricks en el hub.
+          Esto lo hacés una sola vez.
+        </p>
+        <a href={`${base}/challenges/00-setup`}
+           class="inline-block mt-3 bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+          Ir al Setup →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Challenge grid -->
+  <section class="max-w-3xl mx-auto px-4 py-10">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Los 6 challenges</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      {challenges.map(c => (
+        <a href={`${base}/challenges/${c.slug}`}
+           class="bg-white border border-gray-200 rounded-2xl p-5 hover:border-orange-300 hover:shadow-lg transition-all group flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="bg-orange-500 text-white text-sm font-black rounded-lg w-9 h-9 flex items-center justify-center">
+                {c.num}
+              </div>
+              <span class="text-2xl">{c.icon}</span>
+            </div>
+            <span class={`text-xs text-white px-2 py-0.5 rounded-full font-medium ${c.tagColor}`}>
+              {c.tag}
+            </span>
+          </div>
+          <h3 class="font-bold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">
+            {c.title}
+          </h3>
+          <p class="text-gray-500 text-sm flex-1 mb-3">{c.desc}</p>
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>⏱ {c.time}</span>
+            {c.difficulty > 0 && (
+              <span>{'★'.repeat(c.difficulty)}{'☆'.repeat(4 - c.difficulty)}</span>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Equipo SPIKE Prime info -->
+  <section class="max-w-3xl mx-auto px-4 pb-10">
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+      <h2 class="text-lg font-bold text-slate-800 mb-3">🧰 Lo que usan en todos los challenges</h2>
+      <div class="grid sm:grid-cols-2 gap-2 text-sm text-slate-700">
+        {[
+          ['Hub SPIKE Prime', 'Pantalla 5×5, parlante, IMU, Bluetooth'],
+          ['Motor grande ×2', 'Para mover el robot (puertos A y B)'],
+          ['Sensor de color', 'Detecta colores y luz (puerto C)'],
+          ['Sensor ultrasónico', 'Mide distancias con sonar (puerto D)'],
+          ['VS Code', 'Editor de código en tu laptop'],
+          ['Pybricks Code', 'Conecta y ejecuta programas en el hub'],
+        ].map(([name, desc]) => (
+          <div class="flex items-start gap-2">
+            <span class="text-orange-500 mt-0.5">▸</span>
+            <div>
+              <span class="font-semibold">{name}</span>
+              <span class="text-slate-500"> — {desc}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

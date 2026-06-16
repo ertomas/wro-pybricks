@@ -1,0 +1,250 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={5}
+  slug="05-mision-wro"
+  title="Misión WRO"
+  time="90 minutos"
+  difficulty={4}
+  objectives={[
+    'Combinar motores, sensor de color y sensor ultrasónico en un solo programa',
+    'Programar una secuencia de misión con múltiples fases',
+    'Optimizar el tiempo y precisión de la misión',
+    'Aprender a depurar un programa complejo',
+  ]}
+  prevHref="/challenges/04-sensor-ultrasonico"
+  prevTitle="Sensor ultrasónico"
+/>
+
+<h2>🏆 El challenge final</h2>
+
+<p>
+  En la WRO, el robot tiene que completar una serie de tareas en la menor cantidad de tiempo posible,
+  <strong>de forma completamente autónoma</strong> — sin que nadie lo toque mientras corre.
+</p>
+
+<p>
+  En este challenge van a programar una <strong>misión de 4 fases</strong>
+  que simula lo que harán en la competencia:
+</p>
+
+<div class="grid sm:grid-cols-2 gap-3 mb-6">
+  {[
+    ['Fase 1', 'Salida', 'El robot sale de la base y avanza hasta la pista.', '🚀'],
+    ['Fase 2', 'Seguir la línea', 'Sigue la línea negra hasta detectar un obstáculo.', '➡️'],
+    ['Fase 3', 'Esquivar', 'Esquiva el obstáculo y retoma la dirección.', '↩️'],
+    ['Fase 4', 'Regreso', 'Vuelve a la zona de inicio y señaliza que terminó.', '🏠'],
+  ].map(([fase, nombre, desc, icon]) => (
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{fase}</span>
+        <span class="text-lg">{icon}</span>
+        <span class="font-bold text-gray-800 text-sm">{nombre}</span>
+      </div>
+      <p class="text-sm text-gray-600">{desc}</p>
+    </div>
+  ))}
+</div>
+
+<h2>🧠 Estrategia: programar por fases</h2>
+
+<p>
+  Para programas complejos, la clave es dividirlos en <strong>funciones</strong>.
+  Cada función hace una sola cosa bien. Después juntamos todo en el programa principal.
+</p>
+
+<div class="tip">
+  <p class="tip-title">💡 ¿Por qué usar funciones?</p>
+  <p>
+    Si el seguidor de línea está roto, podés arreglar solo esa función sin tocar el resto.
+    Si necesitás ajustar la velocidad de salida, lo cambiás en un solo lugar.
+    El código queda más fácil de leer y de mejorar.
+  </p>
+</div>
+
+<h2>💡 Código completo</h2>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>mision_wro.py</span>
+    <span>PUNTO DE PARTIDA — ajustá los valores según tu robot</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> Motor, ColorSensor, UltrasonicSensor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port, Direction, Color
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.robotics</span> <span class="text-blue-400">import</span> DriveBase
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait, StopWatch
+
+<span class="text-zinc-500"># ═══ HARDWARE ══════════════════════════════════════════</span>
+hub = PrimeHub()
+motor_izq = Motor(Port.A, Direction.COUNTERCLOCKWISE)
+motor_der = Motor(Port.B)
+robot = DriveBase(motor_izq, motor_der, wheel_diameter=<span class="text-orange-400">56</span>, axle_track=<span class="text-orange-400">112</span>)
+sensor_color = ColorSensor(Port.C)
+sensor_ultra = UltrasonicSensor(Port.D)
+
+<span class="text-zinc-500"># ═══ PARÁMETROS — ajustá estos valores ════════════════</span>
+VEL_RECTA = <span class="text-orange-400">250</span>          <span class="text-zinc-500"># velocidad en rectas (mm/s)</span>
+VEL_LINEA = <span class="text-orange-400">150</span>          <span class="text-zinc-500"># velocidad del seguidor (mm/s)</span>
+UMBRAL = <span class="text-orange-400">45</span>             <span class="text-zinc-500"># umbral del sensor de color</span>
+GANANCIA = <span class="text-orange-400">1.5</span>          <span class="text-zinc-500"># ganancia del seguidor</span>
+DIST_OBSTACULO = <span class="text-orange-400">200</span>    <span class="text-zinc-500"># distancia de detección del obstáculo (mm)</span>
+
+<span class="text-zinc-500"># ═══ FUNCIONES ════════════════════════════════════════</span>
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">beep_inicio</span>():
+    <span class="text-zinc-500">"""Señal de inicio: cuenta regresiva 3..2..1"""</span>
+    <span class="text-blue-400">for</span> freq <span class="text-blue-400">in</span> [<span class="text-orange-400">440</span>, <span class="text-orange-400">550</span>, <span class="text-orange-400">880</span>]:
+        hub.speaker.beep(frequency=freq, duration=<span class="text-orange-400">200</span>)
+        wait(<span class="text-orange-400">100</span>)
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">fase1_salida</span>():
+    <span class="text-zinc-500">"""Sale de la base y avanza hasta la pista."""</span>
+    hub.display.text(<span class="text-yellow-400">"1"</span>)
+    hub.light.on(Color.BLUE)
+    robot.straight(<span class="text-orange-400">300</span>)   <span class="text-zinc-500"># ajustá la distancia a tu mesa</span>
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">fase2_seguir_linea</span>():
+    <span class="text-zinc-500">"""Sigue la línea negra hasta detectar un obstáculo."""</span>
+    hub.display.text(<span class="text-yellow-400">"2"</span>)
+    hub.light.on(Color.GREEN)
+
+    cronometro = StopWatch()
+
+    <span class="text-blue-400">while</span> <span class="text-orange-400">True</span>:
+        <span class="text-zinc-500"># ¿Hay un obstáculo cerca?</span>
+        <span class="text-blue-400">if</span> sensor_ultra.distance() &lt; DIST_OBSTACULO:
+            robot.stop()
+            <span class="text-blue-400">return</span>  <span class="text-zinc-500"># salir de la función → ir a fase 3</span>
+
+        <span class="text-zinc-500"># ¿Tiempo máximo superado? (seguridad)</span>
+        <span class="text-blue-400">if</span> cronometro.time() > <span class="text-orange-400">8000</span>:   <span class="text-zinc-500"># 8 segundos máximo</span>
+            robot.stop()
+            <span class="text-blue-400">return</span>
+
+        <span class="text-zinc-500"># Seguir la línea</span>
+        reflejo = sensor_color.reflection()
+        error = reflejo - UMBRAL
+        robot.drive(VEL_LINEA, GANANCIA * error)
+        wait(<span class="text-orange-400">10</span>)
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">fase3_esquivar</span>():
+    <span class="text-zinc-500">"""Esquiva el obstáculo y continúa."""</span>
+    hub.display.text(<span class="text-yellow-400">"3"</span>)
+    hub.light.on(Color.YELLOW)
+    hub.speaker.beep(frequency=<span class="text-orange-400">660</span>, duration=<span class="text-orange-400">200</span>)
+
+    robot.straight(-<span class="text-orange-400">100</span>)    <span class="text-zinc-500"># retroceder un poco</span>
+    robot.turn(-<span class="text-orange-400">90</span>)        <span class="text-zinc-500"># girar izquierda</span>
+    robot.straight(<span class="text-orange-400">250</span>)    <span class="text-zinc-500"># avanzar al costado del obstáculo</span>
+    robot.turn(<span class="text-orange-400">90</span>)         <span class="text-zinc-500"># volver a apuntar adelante</span>
+    robot.straight(<span class="text-orange-400">350</span>)    <span class="text-zinc-500"># pasar el obstáculo</span>
+    robot.turn(<span class="text-orange-400">90</span>)         <span class="text-zinc-500"># girar de vuelta hacia la línea</span>
+    robot.straight(<span class="text-orange-400">250</span>)    <span class="text-zinc-500"># volver a la línea</span>
+    robot.turn(-<span class="text-orange-400">90</span>)        <span class="text-zinc-500"># quedar alineado con la dirección original</span>
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">fase4_regreso</span>():
+    <span class="text-zinc-500">"""Regresa a la zona de inicio."""</span>
+    hub.display.text(<span class="text-yellow-400">"4"</span>)
+    hub.light.on(Color.ORANGE)
+    robot.turn(<span class="text-orange-400">180</span>)        <span class="text-zinc-500"># dar vuelta</span>
+    robot.straight(<span class="text-orange-400">600</span>)    <span class="text-zinc-500"># volver (ajustá según la distancia real)</span>
+
+<span class="text-blue-400">def</span> <span class="text-yellow-300">mision_completa</span>():
+    <span class="text-zinc-500">"""Celebración de fin de misión."""</span>
+    hub.light.on(Color.GREEN)
+    hub.display.text(<span class="text-yellow-400">"OK!"</span>)
+    <span class="text-blue-400">for</span> freq <span class="text-blue-400">in</span> [<span class="text-orange-400">440</span>, <span class="text-orange-400">550</span>, <span class="text-orange-400">660</span>, <span class="text-orange-400">880</span>]:
+        hub.speaker.beep(frequency=freq, duration=<span class="text-orange-400">150</span>)
+
+<span class="text-zinc-500"># ═══ PROGRAMA PRINCIPAL ═══════════════════════════════</span>
+robot.settings(straight_speed=VEL_RECTA, turn_rate=<span class="text-orange-400">90</span>)
+
+beep_inicio()
+wait(<span class="text-orange-400">500</span>)
+
+fase1_salida()
+fase2_seguir_linea()
+fase3_esquivar()
+fase4_regreso()
+mision_completa()</code></pre>
+</div>
+
+<h2>🔧 Cómo depurar el programa</h2>
+
+<p>
+  Es casi seguro que el programa no va a funcionar perfecto la primera vez.
+  Eso es normal — así trabajan los ingenieros. La clave es <strong>probar una fase por vez</strong>:
+</p>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <h4>Primero probá cada función sola</h4>
+      <p>Comentá el programa principal y llamá solo <code class="font-mono text-xs bg-gray-100 px-1 rounded">fase1_salida()</code>. ¿Funciona bien? Después probá solo la fase 2, y así.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <h4>Ajustá los parámetros</h4>
+      <p>Todos los valores ajustables están arriba en la sección PARÁMETROS. Cambiá solo uno a la vez y anotá el resultado.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <h4>Medí con cronómetro</h4>
+      <p>¿Cuántos segundos tarda cada fase? Usá <code class="font-mono text-xs bg-gray-100 px-1 rounded">StopWatch()</code> para medirlo en el código o un cronómetro externo.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">4</div>
+    <div class="step-content">
+      <h4>Repetí 3 veces</h4>
+      <p>Un programa confiable tiene que funcionar 3 veces seguidas sin falla. Si falla una vez de tres, hay algo que ajustar.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 05 (Final)</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'El robot completa la misión de principio a fin sin intervención humana',
+      'Las 4 fases se ejecutan en orden correcto',
+      'El robot no choca con el obstáculo',
+      'El robot regresa a la zona de inicio',
+      'El tiempo de misión está medido y registrado: _____ segundos',
+      'El programa funciona al menos 2 de 3 intentos consecutivos',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus — Optimización</h2>
+  <ul class="space-y-2 text-sm">
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span><strong>Tiempo bajo 30 segundos:</strong> reducí velocidades, eliminá <code>wait()</code> innecesarios.</span></li>
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span><strong>Detección de zona de color:</strong> usá el sensor de color para saber cuándo el robot llegó a la zona de inicio (ej: cuadrado azul).</span></li>
+    <li class="flex items-start gap-2"><span class="text-purple-400">▸</span><span><strong>Confiabilidad 3/3:</strong> el programa funciona las 3 veces seguidas. Ajustá velocidades y tolerancias.</span></li>
+  </ul>
+</div>
+
+<!-- Mensaje final -->
+<div class="mt-10 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-8 text-center">
+  <div class="text-5xl mb-3">🏆</div>
+  <h2 class="text-2xl font-black mb-2 mt-0 text-white">¡Completaste todos los challenges!</h2>
+  <p class="text-orange-100 mb-0">
+    Tomas, Gael y Juan Marcos: ahora tienen las bases para enfrentar la WRO.
+    Cada línea de código que escribieron es un paso más cerca de la competencia.
+  </p>
+</div>

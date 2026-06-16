@@ -1,0 +1,209 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+---
+
+<ChallengeLayout
+  number={2}
+  slug="02-movimiento"
+  title="Movimiento básico"
+  time="40 minutos"
+  difficulty={2}
+  objectives={[
+    'Configurar los motores y la base de manejo (DriveBase)',
+    'Mover el robot distancias precisas en milímetros',
+    'Girar el robot ángulos precisos en grados',
+    'Entender cómo el diámetro de rueda y la separación de ejes afectan el movimiento',
+  ]}
+  prevHref="/challenges/01-hola-hub"
+  prevTitle="Hola Hub"
+  nextHref="/challenges/03-sensor-color"
+  nextTitle="Sensor de color"
+/>
+
+<h2>🧠 Conceptos clave</h2>
+
+<p>
+  Para mover un robot con dos ruedas usamos <strong>DriveBase</strong>.
+  Es la clase de Pybricks que coordina automáticamente los dos motores para
+  que el robot vaya recto o gire con precisión.
+</p>
+
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+  <p class="text-sm font-semibold text-slate-700 mb-3">Los dos parámetros más importantes:</p>
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div class="bg-white rounded-lg p-3 border border-slate-200">
+      <div class="font-mono text-sm font-bold text-orange-600 mb-1">wheel_diameter</div>
+      <div class="text-sm text-slate-600">
+        Diámetro de las ruedas en <strong>mm</strong>.
+        Para las ruedas estándar de SPIKE Prime: <strong>56 mm</strong>.
+        Si está mal, el robot no recorre la distancia correcta.
+      </div>
+    </div>
+    <div class="bg-white rounded-lg p-3 border border-slate-200">
+      <div class="font-mono text-sm font-bold text-orange-600 mb-1">axle_track</div>
+      <div class="text-sm text-slate-600">
+        Distancia entre el centro de las dos ruedas en <strong>mm</strong>.
+        Medila con regla en tu robot. Si está mal, los giros no serán exactos.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="warning">
+  <p class="warning-title">⚠️ Medí tu robot</p>
+  <p>
+    Cada robot tiene dimensiones distintas según cómo lo armaron. Antes de correr el código,
+    medí el <code>axle_track</code> de tu robot con una regla y ajustá el valor.
+    Un error de 5 mm en este parámetro hace que el robot no gire correctamente.
+  </p>
+</div>
+
+<h2>💡 Programa base</h2>
+
+<p>Guardá esto como <code class="bg-gray-100 px-1 rounded text-sm font-mono">movimiento.py</code> y presioná <kbd class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">F5</kbd>:</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>movimiento.py</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code><span class="text-blue-400">from</span> <span class="text-green-400">pybricks.hubs</span> <span class="text-blue-400">import</span> PrimeHub
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.pupdevices</span> <span class="text-blue-400">import</span> Motor
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.parameters</span> <span class="text-blue-400">import</span> Port, Direction
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.robotics</span> <span class="text-blue-400">import</span> DriveBase
+<span class="text-blue-400">from</span> <span class="text-green-400">pybricks.tools</span> <span class="text-blue-400">import</span> wait
+
+hub = PrimeHub()
+
+<span class="text-zinc-500"># Motores — ajustá los puertos según tu robot</span>
+<span class="text-zinc-500"># Direction.COUNTERCLOCKWISE invierte el motor izquierdo</span>
+motor_izq = Motor(Port.A, Direction.COUNTERCLOCKWISE)
+motor_der = Motor(Port.B)
+
+<span class="text-zinc-500"># Crear DriveBase — ajustá axle_track según tu robot</span>
+robot = DriveBase(motor_izq, motor_der,
+                  wheel_diameter=<span class="text-orange-400">56</span>,
+                  axle_track=<span class="text-orange-400">112</span>)
+
+<span class="text-zinc-500"># Configurar velocidades (opcional pero recomendado)</span>
+robot.settings(straight_speed=<span class="text-orange-400">200</span>,      <span class="text-zinc-500"># mm/s</span>
+               straight_acceleration=<span class="text-orange-400">400</span>,  <span class="text-zinc-500"># mm/s²</span>
+               turn_rate=<span class="text-orange-400">90</span>,             <span class="text-zinc-500"># deg/s</span>
+               turn_acceleration=<span class="text-orange-400">360</span>)    <span class="text-zinc-500"># deg/s²</span>
+
+<span class="text-zinc-500"># Señal de inicio</span>
+hub.speaker.beep(frequency=<span class="text-orange-400">440</span>, duration=<span class="text-orange-400">200</span>)
+
+<span class="text-zinc-500"># Avanzar 30 cm (300 mm)</span>
+robot.straight(<span class="text-orange-400">300</span>)
+wait(<span class="text-orange-400">500</span>)
+
+<span class="text-zinc-500"># Girar 90° a la derecha</span>
+robot.turn(<span class="text-orange-400">90</span>)
+wait(<span class="text-orange-400">500</span>)
+
+<span class="text-zinc-500"># Avanzar 20 cm más</span>
+robot.straight(<span class="text-orange-400">200</span>)
+
+<span class="text-zinc-500"># Señal de fin</span>
+hub.speaker.beep(frequency=<span class="text-orange-400">880</span>, duration=<span class="text-orange-400">400</span>)</code></pre>
+</div>
+
+<div class="tip">
+  <p class="tip-title">💡 Valores negativos = dirección opuesta</p>
+  <p>
+    <code>robot.straight(-300)</code> retrocede 30 cm.
+    <code>robot.turn(-90)</code> gira 90° a la <em>izquierda</em>.
+  </p>
+</div>
+
+<h2>🎯 Tu challenge: el cuadrado</h2>
+
+<p>
+  Programá al robot para que haga un cuadrado de <strong>30 cm × 30 cm</strong>.
+  Cuando termine el cuadrado, debe volver exactamente al punto de inicio.
+</p>
+
+<div class="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+  <p class="text-sm font-semibold text-gray-700 mb-2">Pista: usá un bucle <code class="font-mono">for</code></p>
+  <pre class="bg-zinc-900 rounded-lg p-3 text-xs text-zinc-100 overflow-x-auto"><code><span class="text-zinc-500"># Un cuadrado = 4 veces: avanzar 30cm + girar 90°</span>
+<span class="text-blue-400">for</span> _ <span class="text-blue-400">in</span> range(<span class="text-orange-400">4</span>):
+    robot.straight(<span class="text-orange-400">300</span>)
+    robot.turn(<span class="text-orange-400">90</span>)</code></pre>
+</div>
+
+<div class="warning">
+  <p class="warning-title">🔬 ¿El cuadrado no cierra bien?</p>
+  <p>
+    Si el robot se pasa o se queda corto al girar, ajustá <code>axle_track</code>.
+    Si avanza de más o de menos, ajustá <code>wheel_diameter</code>.
+    Hacé ajustes de a 2-3 mm y volvé a probar.
+  </p>
+</div>
+
+<!-- Referencia rápida -->
+<h2>📖 Referencia rápida</h2>
+
+<div class="overflow-x-auto mb-6">
+  <table class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="bg-slate-800 text-white">
+        <th class="text-left px-4 py-2 rounded-tl-lg">Método</th>
+        <th class="text-left px-4 py-2">Parámetro</th>
+        <th class="text-left px-4 py-2 rounded-tr-lg">Qué hace</th>
+      </tr>
+    </thead>
+    <tbody>
+      {[
+        ['robot.straight(dist)', 'dist en mm', 'Avanza o retrocede (negativo)'],
+        ['robot.turn(angle)', 'ángulo en grados', 'Gira en el lugar (+derecha, -izquierda)'],
+        ['robot.drive(speed, turn)', 'speed mm/s, turn deg/s', 'Avanza y gira al mismo tiempo'],
+        ['robot.stop()', '—', 'Frena los motores inmediatamente'],
+        ['robot.distance()', '—', 'Devuelve mm recorridos desde el último reset'],
+        ['robot.angle()', '—', 'Devuelve el ángulo girado total en grados'],
+      ].map(([method, param, desc], i) => (
+        <tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+          <td class="px-4 py-2 font-mono text-xs text-orange-700">{method}</td>
+          <td class="px-4 py-2 text-gray-500 text-xs">{param}</td>
+          <td class="px-4 py-2 text-gray-700">{desc}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 02</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'El robot avanza exactamente 30 cm (±2 cm, verificado con regla)',
+      'El robot gira exactamente 90° (verificado visualmente)',
+      'El cuadrado de 30×30 cm cierra con menos de 3 cm de error',
+      'Ajustaron wheel_diameter y axle_track para su robot específico',
+      'Saben la diferencia entre robot.straight() y robot.drive()',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus</h2>
+  <ul class="space-y-2 list-none">
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Triángulo equilátero:</strong> cada lado de 25 cm. ¿Cuántos grados tiene que girar?</span>
+    </li>
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Espiral:</strong> avanzar 5 cm, girar 90°, avanzar 10 cm, girar 90°, avanzar 15 cm... hasta 35 cm.</span>
+    </li>
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Figura libre:</strong> programá una figura que el grupo elija. Tiene que poder reproducirse exactamente.</span>
+    </li>
+  </ul>
+</div>
