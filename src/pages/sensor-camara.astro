@@ -166,26 +166,16 @@ while True:
   </div>
 
   <script>
-    // ── Protocolo Pybricks BLE ──────────────────────────────────────────────
-    // Característica de comando/evento del firmware Pybricks.
-    const PYBRICKS_SERVICE_UUID = 'c5f50001-8280-46da-89f4-6d8051e4aeef';
-    const PYBRICKS_COMMAND_EVENT_UUID = 'c5f50002-8280-46da-89f4-6d8051e4aeef';
-    // Comando "escribir app data": 0x07 + offset (16-bit LE) + payload.
-    const CMD_WRITE_APP_DATA = 0x07;
-    // Eventos que llegan del hub (primer byte de la notificación).
-    const EVT_STATUS = 0x00;
-    const EVT_STDOUT = 0x01;
-    const EVT_APP_DATA = 0x02;
+    // La comunicación con el hub vive en un módulo aparte, reutilizable.
+    import { PybricksHub, isWebBluetoothSupported } from '../lib/pybricks-ble.js';
 
     const SEND_INTERVAL_MS = 100; // 10 veces por segundo
 
     // ── Estado ──────────────────────────────────────────────────────────────
-    let device = null;
-    let characteristic = null;
+    const hub = new PybricksHub();
     let cameraOn = false;
     let streaming = false;
     let sendTimer = null;
-    let writeBusy = false;
     let lastHSV = [0, 0, 0];
 
     // ── Elementos ───────────────────────────────────────────────────────────
@@ -215,7 +205,7 @@ while True:
     }
 
     // ── Soporte ─────────────────────────────────────────────────────────────
-    if (!navigator.bluetooth) {
+    if (!isWebBluetoothSupported()) {
       $('unsupported').classList.remove('hidden');
       $('btn-connect').disabled = true;
     }
@@ -307,61 +297,47 @@ while True:
 
     // ── Bluetooth ───────────────────────────────────────────────────────────
     $('btn-connect').addEventListener('click', async () => {
-      if (characteristic) { // ya conectado → desconectar
-        if (device?.gatt?.connected) device.gatt.disconnect();
+      if (hub.connected) {
+        hub.disconnect();
         return;
       }
       try {
         setStatus('connecting', 'Buscando hub…');
-        device = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [PYBRICKS_SERVICE_UUID] }],
-          optionalServices: [PYBRICKS_SERVICE_UUID],
-        });
-        device.addEventListener('gattserverdisconnected', onDisconnected);
-        log('Conectando a ' + (device.name || 'hub') + '…');
-
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService(PYBRICKS_SERVICE_UUID);
-        characteristic = await service.getCharacteristic(PYBRICKS_COMMAND_EVENT_UUID);
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', onNotify);
-
-        setStatus('on', 'Conectado a ' + (device.name || 'hub'));
-        $('btn-connect').textContent = 'Desconectar';
-        log('¡Conectado! Listo para enviar.');
+        log('Buscando hub…');
+        await hub.connect();
       } catch (err) {
         setStatus('error', 'Error de conexión');
         log('Error BLE: ' + err.message);
-        characteristic = null;
       }
     });
 
-    function onDisconnected() {
-      log('Hub desconectado.');
+    hub.addEventListener('connect', (e) => {
+      const name = e.detail.name || 'hub';
+      setStatus('on', 'Conectado a ' + name);
+      $('btn-connect').textContent = 'Desconectar';
+      log('¡Conectado a ' + name + '! Listo para enviar.');
+    });
+
+    hub.addEventListener('disconnect', () => {
       setStatus('off', 'Desconectado');
       $('btn-connect').textContent = 'Conectar hub';
-      characteristic = null;
+      log('Hub desconectado.');
       stopStreaming();
-    }
+    });
 
-    function onNotify(event) {
-      const data = new Uint8Array(event.target.value.buffer);
-      const evt = data[0];
-      const payload = data.slice(1);
-      if (evt === EVT_STDOUT) {
-        const txt = new TextDecoder().decode(payload).replace(/\s+$/, '');
-        if (txt) log('hub » ' + txt);
-      } else if (evt === EVT_APP_DATA) {
-        log('app-data « ' + Array.from(payload).join(','));
-      } else if (evt === EVT_STATUS) {
-        // status report; lo ignoramos por ahora
-      }
-    }
+    hub.addEventListener('stdout', (e) => {
+      const txt = e.detail.text.replace(/\s+$/, '');
+      if (txt) log('hub » ' + txt);
+    });
+
+    hub.addEventListener('appdata', (e) => {
+      log('app-data « ' + Array.from(e.detail.bytes).join(','));
+    });
 
     // ── Envío de color ──────────────────────────────────────────────────────
     $('btn-stream').addEventListener('click', () => {
       if (streaming) { stopStreaming(); return; }
-      if (!characteristic) {
+      if (!hub.connected) {
         alert('Primero conectá el hub.');
         return;
       }
@@ -383,23 +359,18 @@ while True:
     }
 
     async function sendColor() {
-      if (!characteristic || writeBusy) return;
+      if (!hub.connected) return;
       const [h, s, v] = lastHSV;
-      // Empaquetamos: comando 0x07, offset 0 (2 bytes LE), luego H/2, S, V.
-      const payload = new Uint8Array([
-        CMD_WRITE_APP_DATA,
-        0x00, 0x00,                       // offset = 0
-        Math.min(179, Math.round(h / 2)), // tono / 2 para que entre en un byte
+      // 3 bytes en el buffer de AppData: tono/2 (entra en un byte), saturación, brillo.
+      const color = [
+        Math.min(179, Math.round(h / 2)),
         Math.min(100, Math.round(s)),
         Math.min(100, Math.round(v)),
-      ]);
-      writeBusy = true;
+      ];
       try {
-        await characteristic.writeValueWithResponse(payload);
+        await hub.sendAppData(color); // descarta el envío si el anterior sigue en curso
       } catch (err) {
         log('Error al enviar: ' + err.message);
-      } finally {
-        writeBusy = false;
       }
     }
 
