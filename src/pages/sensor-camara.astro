@@ -1,0 +1,419 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<BaseLayout title="Sensor de cámara">
+
+  <div class="max-w-3xl mx-auto px-4 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href={`${base}/`} class="hover:text-orange-500 transition-colors">Inicio</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">Sensor de cámara</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+      <div class="flex items-start gap-4">
+        <div class="bg-orange-500 text-white text-3xl rounded-xl w-14 h-14 flex items-center justify-center flex-shrink-0">
+          📷
+        </div>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl font-bold text-gray-900 mb-1">Tu teléfono como sensor de color</h1>
+          <p class="text-gray-600 text-sm">
+            Conectá este teléfono al hub por Bluetooth y mandale el color que ve la cámara,
+            en tiempo real. Sin la app oficial de Pybricks.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aviso compatibilidad -->
+    <div id="unsupported" class="hidden bg-red-50 border-l-4 border-red-400 rounded-r-xl p-4 mb-6">
+      <p class="text-red-800 font-bold text-sm mb-1">⚠️ Este navegador no soporta Web Bluetooth</p>
+      <p class="text-red-700 text-sm">
+        Usá <b>Chrome</b> en Android (no funciona en Firefox ni en iPhone/Safari).
+        La página tiene que abrirse por <b>https://</b> (o localhost).
+      </p>
+    </div>
+
+    <!-- Panel de conexión -->
+    <div class="bg-slate-900 text-white rounded-2xl p-5 mb-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <span id="status-dot" class="w-3 h-3 rounded-full bg-slate-500"></span>
+          <span id="status-text" class="text-sm font-medium text-slate-300">Desconectado</span>
+        </div>
+        <button id="btn-connect"
+                class="bg-orange-500 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          Conectar hub
+        </button>
+      </div>
+    </div>
+
+    <!-- Cámara + lectura -->
+    <div class="grid sm:grid-cols-2 gap-4 mb-6">
+
+      <!-- Vista de cámara -->
+      <div class="bg-black rounded-2xl overflow-hidden relative aspect-square">
+        <video id="video" class="w-full h-full object-cover" playsinline autoplay muted></video>
+        <!-- Mira central -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="w-16 h-16 border-2 border-white rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]"></div>
+        </div>
+        <div id="cam-hint" class="absolute inset-0 flex items-center justify-center text-slate-400 text-sm text-center px-4">
+          Tocá «Encender cámara» para empezar
+        </div>
+      </div>
+
+      <!-- Lectura de color -->
+      <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Color detectado</p>
+        <div class="flex items-center gap-4 mb-4">
+          <div id="swatch" class="w-16 h-16 rounded-xl border border-gray-200 flex-shrink-0" style="background:#222"></div>
+          <div>
+            <div id="color-name" class="text-xl font-bold text-gray-900">—</div>
+            <div id="color-hsv" class="text-xs text-gray-500 font-mono">H — · S — · V —</div>
+          </div>
+        </div>
+        <div class="mt-auto space-y-2">
+          <button id="btn-camera"
+                  class="w-full bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+            Encender cámara
+          </button>
+          <button id="btn-stream" disabled
+                  class="w-full bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            ▶ Empezar a enviar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consola de depuración -->
+    <details class="mb-8">
+      <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700">Ver registro técnico</summary>
+      <pre id="log" class="mt-2 bg-slate-900 text-slate-300 text-xs rounded-xl p-3 h-32 overflow-auto font-mono"></pre>
+    </details>
+
+    <!-- Instrucciones / código del hub -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 rounded-r-xl p-4 mb-4">
+      <p class="text-blue-700 font-bold text-sm mb-2">Cómo se usa</p>
+      <ol class="text-blue-800 text-sm space-y-1 list-decimal list-inside">
+        <li>Cargá el programa de abajo en el hub desde Pybricks Code y dale <b>play</b>.</li>
+        <li>En este teléfono: <b>Encender cámara</b> → <b>Conectar hub</b> → <b>Empezar a enviar</b>.</li>
+        <li>Apuntá la mira a un objeto de color y mirá cómo reacciona el robot.</li>
+      </ol>
+    </div>
+
+    <div class="bg-orange-50 border-l-4 border-orange-400 rounded-r-xl p-4 mb-6">
+      <p class="text-orange-700 font-bold text-sm mb-1">💡 SPIKE Prime acepta dos conexiones</p>
+      <p class="text-orange-800 text-sm">
+        Podés tener Pybricks Code conectado en la compu <i>y</i> el teléfono conectado al mismo tiempo.
+        Primero conectá Pybricks Code y dale play al programa; recién después conectá el teléfono acá.
+      </p>
+    </div>
+
+    <h2 class="text-lg font-bold text-gray-900 mb-3">Programa para el hub</h2>
+    <p class="text-gray-600 text-sm mb-3">
+      Recibe 3 bytes (tono, saturación, brillo) que manda el teléfono y los convierte en un nombre de color.
+    </p>
+    <div class="relative">
+      <button id="btn-copy"
+              class="absolute top-3 right-3 bg-slate-700 text-white text-xs px-3 py-1 rounded-md hover:bg-slate-600 transition-colors">
+        Copiar
+      </button>
+      <pre id="hub-code" class="bg-slate-900 text-slate-100 text-xs sm:text-sm rounded-xl p-4 pt-10 overflow-auto font-mono leading-relaxed"><code>from pybricks.hubs import PrimeHub
+from pybricks.messaging import AppData
+from pybricks.tools import wait
+
+hub = PrimeHub()
+
+# 3 bytes en el modo 0: tono (0-179), saturacion (0-100), brillo (0-100)
+app = AppData([(0, 3)])
+
+def nombre_color(h, s, v):
+    hue = h * 2  # el telefono manda el tono dividido en 2
+    if v < 15:
+        return "negro"
+    if s < 25:
+        return "blanco" if v > 60 else "gris"
+    if hue < 20 or hue >= 340:
+        return "rojo"
+    if hue < 45:
+        return "naranja"
+    if hue < 70:
+        return "amarillo"
+    if hue < 170:
+        return "verde"
+    if hue < 255:
+        return "azul"
+    if hue < 290:
+        return "violeta"
+    return "rosa"
+
+while True:
+    h, s, v = app.get_bytes(mode=0)
+    color = nombre_color(h, s, v)
+    hub.display.text(color[0].upper())
+    print(color, "  H", h * 2, "S", s, "V", v)
+    wait(100)
+</code></pre>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Protocolo Pybricks BLE ──────────────────────────────────────────────
+    // Característica de comando/evento del firmware Pybricks.
+    const PYBRICKS_SERVICE_UUID = 'c5f50001-8280-46da-89f4-6d8051e4aeef';
+    const PYBRICKS_COMMAND_EVENT_UUID = 'c5f50002-8280-46da-89f4-6d8051e4aeef';
+    // Comando "escribir app data": 0x07 + offset (16-bit LE) + payload.
+    const CMD_WRITE_APP_DATA = 0x07;
+    // Eventos que llegan del hub (primer byte de la notificación).
+    const EVT_STATUS = 0x00;
+    const EVT_STDOUT = 0x01;
+    const EVT_APP_DATA = 0x02;
+
+    const SEND_INTERVAL_MS = 100; // 10 veces por segundo
+
+    // ── Estado ──────────────────────────────────────────────────────────────
+    let device = null;
+    let characteristic = null;
+    let cameraOn = false;
+    let streaming = false;
+    let sendTimer = null;
+    let writeBusy = false;
+    let lastHSV = [0, 0, 0];
+
+    // ── Elementos ───────────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    const video = $('video');
+    const sampler = document.createElement('canvas');
+    sampler.width = sampler.height = 32;
+    const sctx = sampler.getContext('2d', { willReadFrequently: true });
+
+    function log(msg) {
+      const el = $('log');
+      const t = new Date().toLocaleTimeString();
+      el.textContent += `[${t}] ${msg}\n`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setStatus(state, text) {
+      const dot = $('status-dot');
+      const colors = {
+        off: 'bg-slate-500',
+        connecting: 'bg-yellow-400 animate-pulse',
+        on: 'bg-green-400',
+        error: 'bg-red-500',
+      };
+      dot.className = `w-3 h-3 rounded-full ${colors[state] || colors.off}`;
+      $('status-text').textContent = text;
+    }
+
+    // ── Soporte ─────────────────────────────────────────────────────────────
+    if (!navigator.bluetooth) {
+      $('unsupported').classList.remove('hidden');
+      $('btn-connect').disabled = true;
+    }
+
+    // ── Cámara ──────────────────────────────────────────────────────────────
+    $('btn-camera').addEventListener('click', async () => {
+      if (cameraOn) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        video.srcObject = stream;
+        await video.play();
+        cameraOn = true;
+        $('cam-hint').classList.add('hidden');
+        $('btn-camera').textContent = 'Cámara encendida';
+        $('btn-camera').disabled = true;
+        $('btn-camera').classList.add('opacity-40');
+        $('btn-stream').disabled = false;
+        log('Cámara encendida.');
+        requestAnimationFrame(sampleLoop);
+      } catch (err) {
+        log('Error de cámara: ' + err.message);
+        alert('No se pudo acceder a la cámara: ' + err.message);
+      }
+    });
+
+    // Convierte RGB (0-255) a HSV con H en grados (0-360), S y V en 0-100.
+    function rgbToHsv(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const d = max - min;
+      let h = 0;
+      if (d !== 0) {
+        if (max === r) h = ((g - b) / d) % 6;
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h *= 60;
+        if (h < 0) h += 360;
+      }
+      const s = max === 0 ? 0 : d / max;
+      return [h, s * 100, max * 100];
+    }
+
+    function nombreColor(hue, s, v) {
+      if (v < 15) return 'negro';
+      if (s < 25) return v > 60 ? 'blanco' : 'gris';
+      if (hue < 20 || hue >= 340) return 'rojo';
+      if (hue < 45) return 'naranja';
+      if (hue < 70) return 'amarillo';
+      if (hue < 170) return 'verde';
+      if (hue < 255) return 'azul';
+      if (hue < 290) return 'violeta';
+      return 'rosa';
+    }
+
+    // Lee el promedio del recuadro central de la cámara cada frame.
+    function sampleLoop() {
+      if (!cameraOn) return;
+      if (video.videoWidth) {
+        // Dibujamos solo la zona central del video sobre un canvas chico.
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const box = Math.min(vw, vh) * 0.25; // 25% central
+        sctx.drawImage(
+          video,
+          (vw - box) / 2, (vh - box) / 2, box, box,
+          0, 0, sampler.width, sampler.height
+        );
+        const { data } = sctx.getImageData(0, 0, sampler.width, sampler.height);
+        let r = 0, g = 0, b = 0;
+        const n = data.length / 4;
+        for (let i = 0; i < data.length; i += 4) {
+          r += data[i]; g += data[i + 1]; b += data[i + 2];
+        }
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+
+        const [h, s, v] = rgbToHsv(r, g, b);
+        lastHSV = [h, s, v];
+
+        // Actualizar UI
+        $('swatch').style.background = `rgb(${r},${g},${b})`;
+        $('color-name').textContent = nombreColor(h, s, v);
+        $('color-hsv').textContent =
+          `H ${Math.round(h)}° · S ${Math.round(s)} · V ${Math.round(v)}`;
+      }
+      requestAnimationFrame(sampleLoop);
+    }
+
+    // ── Bluetooth ───────────────────────────────────────────────────────────
+    $('btn-connect').addEventListener('click', async () => {
+      if (characteristic) { // ya conectado → desconectar
+        if (device?.gatt?.connected) device.gatt.disconnect();
+        return;
+      }
+      try {
+        setStatus('connecting', 'Buscando hub…');
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [PYBRICKS_SERVICE_UUID] }],
+          optionalServices: [PYBRICKS_SERVICE_UUID],
+        });
+        device.addEventListener('gattserverdisconnected', onDisconnected);
+        log('Conectando a ' + (device.name || 'hub') + '…');
+
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(PYBRICKS_SERVICE_UUID);
+        characteristic = await service.getCharacteristic(PYBRICKS_COMMAND_EVENT_UUID);
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', onNotify);
+
+        setStatus('on', 'Conectado a ' + (device.name || 'hub'));
+        $('btn-connect').textContent = 'Desconectar';
+        log('¡Conectado! Listo para enviar.');
+      } catch (err) {
+        setStatus('error', 'Error de conexión');
+        log('Error BLE: ' + err.message);
+        characteristic = null;
+      }
+    });
+
+    function onDisconnected() {
+      log('Hub desconectado.');
+      setStatus('off', 'Desconectado');
+      $('btn-connect').textContent = 'Conectar hub';
+      characteristic = null;
+      stopStreaming();
+    }
+
+    function onNotify(event) {
+      const data = new Uint8Array(event.target.value.buffer);
+      const evt = data[0];
+      const payload = data.slice(1);
+      if (evt === EVT_STDOUT) {
+        const txt = new TextDecoder().decode(payload).replace(/\s+$/, '');
+        if (txt) log('hub » ' + txt);
+      } else if (evt === EVT_APP_DATA) {
+        log('app-data « ' + Array.from(payload).join(','));
+      } else if (evt === EVT_STATUS) {
+        // status report; lo ignoramos por ahora
+      }
+    }
+
+    // ── Envío de color ──────────────────────────────────────────────────────
+    $('btn-stream').addEventListener('click', () => {
+      if (streaming) { stopStreaming(); return; }
+      if (!characteristic) {
+        alert('Primero conectá el hub.');
+        return;
+      }
+      streaming = true;
+      $('btn-stream').textContent = '⏸ Detener envío';
+      $('btn-stream').classList.replace('bg-green-600', 'bg-red-600');
+      $('btn-stream').classList.replace('hover:bg-green-700', 'hover:bg-red-700');
+      sendTimer = setInterval(sendColor, SEND_INTERVAL_MS);
+      log('Enviando color al hub…');
+    });
+
+    function stopStreaming() {
+      streaming = false;
+      if (sendTimer) { clearInterval(sendTimer); sendTimer = null; }
+      const b = $('btn-stream');
+      b.textContent = '▶ Empezar a enviar';
+      b.classList.replace('bg-red-600', 'bg-green-600');
+      b.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
+    }
+
+    async function sendColor() {
+      if (!characteristic || writeBusy) return;
+      const [h, s, v] = lastHSV;
+      // Empaquetamos: comando 0x07, offset 0 (2 bytes LE), luego H/2, S, V.
+      const payload = new Uint8Array([
+        CMD_WRITE_APP_DATA,
+        0x00, 0x00,                       // offset = 0
+        Math.min(179, Math.round(h / 2)), // tono / 2 para que entre en un byte
+        Math.min(100, Math.round(s)),
+        Math.min(100, Math.round(v)),
+      ]);
+      writeBusy = true;
+      try {
+        await characteristic.writeValueWithResponse(payload);
+      } catch (err) {
+        log('Error al enviar: ' + err.message);
+      } finally {
+        writeBusy = false;
+      }
+    }
+
+    // ── Copiar código ───────────────────────────────────────────────────────
+    $('btn-copy').addEventListener('click', async () => {
+      const code = $('hub-code').textContent;
+      try {
+        await navigator.clipboard.writeText(code);
+        $('btn-copy').textContent = '¡Copiado!';
+        setTimeout(() => ($('btn-copy').textContent = 'Copiar'), 1500);
+      } catch {
+        $('btn-copy').textContent = 'Error';
+      }
+    });
+  </script>
+
+</BaseLayout>
