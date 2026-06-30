@@ -50,6 +50,85 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <strong>comunicar</strong> (broadcast/observe) y <strong>ubicar</strong> (odometría). Vamos una por una.
 </p>
 
+<h2>🗺️ El flujo completo de un vistazo</h2>
+
+<p>Cómo viaja la información desde el objeto real hasta que la garra lo agarra:</p>
+
+<div class="bg-slate-900 rounded-2xl p-5 mb-6">
+
+  <!-- Nodo 1: teléfono -->
+  <div class="flex items-center gap-4 bg-slate-800 rounded-xl p-4">
+    <span class="text-3xl flex-shrink-0">📱</span>
+    <div class="min-w-0">
+      <p class="text-white font-bold text-sm mb-0.5">Teléfono — cámara con IA</p>
+      <p class="text-slate-300 text-xs mb-0">
+        Teachable Machine <em>reconoce</em> (clase + confianza) y el color fijado <em>ubica</em> en la imagen (cx + tamaño).
+      </p>
+    </div>
+  </div>
+
+  <!-- Flecha 1 -->
+  <div class="flex flex-col items-center py-2.5 gap-1">
+    <span class="text-orange-400 text-xl leading-none">↓</span>
+    <span class="text-[11px] font-mono bg-orange-500/15 text-orange-200 px-2 py-1 rounded-md text-center">
+      AppData (Web Bluetooth)<br />[ clase, confianza, cx, área ]
+    </span>
+  </div>
+
+  <!-- Nodo 2: explorador -->
+  <div class="flex items-center gap-4 bg-slate-800 rounded-xl p-4">
+    <span class="text-3xl flex-shrink-0">🤖</span>
+    <div class="min-w-0">
+      <p class="text-white font-bold text-sm mb-0.5">Robot explorador</p>
+      <p class="text-slate-300 text-xs mb-0">
+        <span class="text-slate-400">buscar → centrar → acercarse</span> y, con su odometría
+        <code class="text-orange-300">(x, y)</code>, calcula dónde está el objeto.
+      </p>
+    </div>
+  </div>
+
+  <!-- Flecha 2 -->
+  <div class="flex flex-col items-center py-2.5 gap-1">
+    <span class="text-green-400 text-xl leading-none">↓</span>
+    <span class="text-[11px] font-mono bg-green-500/15 text-green-200 px-2 py-1 rounded-md text-center">
+      broadcast / observe (BLE hub-a-hub)<br />( obj_x, obj_y, clase )
+    </span>
+  </div>
+
+  <!-- Nodo 3: recuperador -->
+  <div class="flex items-center gap-4 bg-slate-800 rounded-xl p-4">
+    <span class="text-3xl flex-shrink-0">🦾</span>
+    <div class="min-w-0">
+      <p class="text-white font-bold text-sm mb-0.5">Robot recuperador</p>
+      <p class="text-slate-300 text-xs mb-0">
+        <code class="text-green-300">atan2</code> → <code class="text-green-300">turn</code> +
+        <code class="text-green-300">straight</code> hasta el target y cierra la garra.
+      </p>
+    </div>
+  </div>
+
+  <!-- Flecha 3 -->
+  <div class="flex flex-col items-center pt-2.5 gap-1">
+    <span class="text-pink-400 text-xl leading-none">↓</span>
+  </div>
+
+  <!-- Resultado -->
+  <div class="flex items-center justify-center gap-2 bg-pink-500/15 rounded-xl p-3">
+    <span class="text-2xl">🎯</span>
+    <p class="text-pink-200 font-bold text-sm mb-0">¡Objeto recuperado!</p>
+  </div>
+
+</div>
+
+<div class="tip">
+  <p class="tip-title">🧭 Lo que hace que todo encaje</p>
+  <p>
+    Los dos robots arrancan en el <strong>mismo origen mirando para el mismo lado</strong> y hacen
+    <code>robot.reset()</code>. Así un <code>(x, y)</code> significa lo mismo para ambos: por eso el
+    recuperador llega justo a donde el explorador vio el objeto.
+  </p>
+</div>
+
 <h2>🧠 Las tres ideas clave</h2>
 
 <h3>1. Reconocer con Teachable Machine</h3>
