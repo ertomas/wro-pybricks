@@ -63,10 +63,21 @@ const challenges = [
     num: '05',
     slug: '05-mision-wro',
     title: 'Misión WRO',
-    desc: 'Challenge final: combiná todo lo aprendido en una misión estilo WRO real.',
+    desc: 'Combiná todo lo aprendido en una misión estilo WRO real.',
     time: '90 min',
     difficulty: 4,
     icon: '🏆',
+    tag: 'Avanzado',
+    tagColor: 'bg-red-600',
+  },
+  {
+    num: '06',
+    slug: '06-mision-camara',
+    title: 'Misión cámara: dos robots',
+    desc: 'Final: un robot con cámara IA ubica un objeto y otro lo recupera con la garra.',
+    time: '120 min',
+    difficulty: 4,
+    icon: '🤝',
     tag: 'Avanzado',
     tagColor: 'bg-red-600',
   },
@@ -133,9 +144,29 @@ const challenges = [
     </a>
   </div>
 
+  <!-- Herramienta: detección de objetos con Teachable Machine -->
+  <div class="max-w-3xl mx-auto px-4 mt-4">
+    <a href={`${base}/deteccion-objeto`}
+       class="block bg-gradient-to-r from-orange-500 to-pink-600 text-white rounded-2xl p-5 hover:shadow-lg transition-all group">
+      <div class="flex items-center gap-4">
+        <span class="text-4xl flex-shrink-0">🤖</span>
+        <div class="flex-1">
+          <p class="font-bold mb-0.5 flex items-center gap-2">
+            Reconocé un objeto con Teachable Machine
+            <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">NUEVO</span>
+          </p>
+          <p class="text-orange-100 text-sm">
+            Entrená un modelo de IA y el celu le dice al robot qué objeto ve y dónde está.
+          </p>
+        </div>
+        <span class="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+      </div>
+    </a>
+  </div>
+
   <!-- Challenge grid -->
   <section class="max-w-3xl mx-auto px-4 py-10">
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Los 6 challenges</h2>
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Los 7 challenges</h2>
     <div class="grid sm:grid-cols-2 gap-4">
       {challenges.map(c => (
         <a href={`${base}/challenges/${c.slug}`}

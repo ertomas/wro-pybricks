@@ -1,0 +1,340 @@
+---
+import ChallengeLayout from '../../layouts/ChallengeLayout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<ChallengeLayout
+  number={6}
+  slug="06-mision-camara"
+  title="Misión cámara: dos robots cooperando"
+  time="120 minutos"
+  difficulty={4}
+  objectives={[
+    'Entrenar un modelo de IA con Teachable Machine para reconocer un objeto',
+    'Comunicar dos hubs entre sí con broadcast y observe',
+    'Usar un marco de coordenadas compartido y odometría para ubicar un objeto',
+    'Coordinar un robot explorador (con cámara) y uno recuperador (con garra)',
+  ]}
+  prevHref="/challenges/05-mision-wro"
+  prevTitle="Misión WRO"
+/>
+
+<h2>🤝 El reto: dos robots, una misión</h2>
+
+<p>
+  Hasta ahora cada robot trabajó solo. En este challenge final, <strong>dos robots cooperan</strong>:
+</p>
+
+<div class="grid sm:grid-cols-2 gap-3 mb-6">
+  <div class="bg-white border border-gray-200 rounded-xl p-4">
+    <div class="text-3xl mb-2">📷🤖</div>
+    <p class="font-bold text-gray-900 mb-1">Robot explorador</p>
+    <p class="text-sm text-gray-600 mb-0">
+      Usa el teléfono como cámara con IA. Busca el objeto, lo reconoce, calcula
+      <strong>dónde está</strong> y le transmite la coordenada al otro robot.
+    </p>
+  </div>
+  <div class="bg-white border border-gray-200 rounded-xl p-4">
+    <div class="text-3xl mb-2">🦾</div>
+    <p class="font-bold text-gray-900 mb-1">Robot recuperador</p>
+    <p class="text-sm text-gray-600 mb-0">
+      Escucha por Bluetooth, recibe la coordenada, <strong>navega hasta ahí</strong>
+      y agarra el objeto con la garra.
+    </p>
+  </div>
+</div>
+
+<p>
+  Suena complejo, pero son tres piezas que ya casi conocés: <strong>reconocer</strong> (Teachable Machine),
+  <strong>comunicar</strong> (broadcast/observe) y <strong>ubicar</strong> (odometría). Vamos una por una.
+</p>
+
+<h2>🧠 Las tres ideas clave</h2>
+
+<h3>1. Reconocer con Teachable Machine</h3>
+<p>
+  El teléfono corre un modelo de inteligencia artificial que entrenás vos con fotos.
+  Te dice <strong>qué clase</strong> de objeto ve y con <strong>cuánta confianza</strong> (0 a 100).
+  No necesitás la app oficial de pago: usamos nuestra propia página gratis.
+</p>
+
+<h3>2. Comunicar dos hubs (broadcast / observe)</h3>
+<p>
+  Los hubs se hablan por radio Bluetooth, sin cables. Uno <strong>transmite</strong> (broadcast) en un
+  canal y el otro <strong>escucha</strong> (observe) ese mismo canal. Pueden mandar números, como una
+  coordenada.
+</p>
+
+<div class="tip">
+  <p class="tip-title">📡 El canal tiene que coincidir</p>
+  <p>
+    Si el explorador transmite en el canal <code>1</code>, el recuperador tiene que escuchar el canal
+    <code>1</code>. Como sintonizar la misma estación de radio.
+  </p>
+</div>
+
+<h3>3. Ubicar con un marco de coordenadas compartido</h3>
+<p>
+  Para que una coordenada <code>(x, y)</code> signifique lo mismo para los dos robots, ambos tienen que
+  <strong>arrancar en el mismo lugar mirando para el mismo lado</strong> (el "origen"). Desde ahí, cada
+  robot lleva la cuenta de dónde está usando su <strong>odometría</strong> (cuánto avanzó y cuánto giró).
+</p>
+
+<div class="warning">
+  <p class="warning-title">⚠️ El origen es sagrado</p>
+  <p>
+    Marcá con cinta una esquina de la cancha y una flecha de dirección. Los dos robots empiezan exactamente
+    ahí. Si el recuperador arranca de otro lado, va a buscar el objeto en el lugar equivocado.
+  </p>
+</div>
+
+<h2>🎓 Paso 1 — Entrená tu modelo de IA</h2>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <h4>Abrí Teachable Machine</h4>
+      <p>Andá a <code>teachablemachine.withgoogle.com</code> → <strong>Get Started</strong> → <strong>Image Project</strong> → <strong>Standard image model</strong>.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <h4>Creá las clases</h4>
+      <p>Una clase para tu objeto (ej. "pelota") y otra para "nada"/fondo. Sacá muchas fotos de cada una con la <strong>misma cámara que vas a usar en el robot</strong>, desde varios ángulos y fondos.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <h4>Entrená y exportá</h4>
+      <p><strong>Train Model</strong> → <strong>Export Model</strong> → pestaña <strong>Tensorflow.js</strong> → <strong>Upload my model</strong>. Copiá el link que te da (algo como <code>https://teachablemachine.withgoogle.com/models/XXXX/</code>).</p>
+    </div>
+  </div>
+</div>
+
+<div class="tip">
+  <p class="tip-title">💡 ¿Cuál es el "índice" de tu clase?</p>
+  <p>
+    Las clases se numeran por orden, empezando en <strong>0</strong>. Si "nada" es la primera y "pelota" la
+    segunda, entonces "pelota" es la clase <code>1</code>. Ese número va en <code>CLASE_OBJETIVO</code>.
+  </p>
+</div>
+
+<h2>🔌 Paso 2 — Probá el canal (sin cámara todavía)</h2>
+
+<p>
+  Antes de armar todo, comprobá que los dos hubs se escuchan. Cargá un programa en cada hub y dales play.
+  El recuperador debería oír una coordenada fija y manejar hacia ella.
+</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-3">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>test-canal-explorador.py — en el HUB 1</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code>from pybricks.hubs import PrimeHub
+from pybricks.parameters import Color
+from pybricks.tools import wait
+
+# El canal (1) tiene que coincidir con el del recuperador.
+hub = PrimeHub(broadcast_channel=1)
+
+X, Y, CLASE = 300, 200, 0   # coordenada fija de prueba (mm)
+
+while True:
+    hub.ble.broadcast((X, Y, CLASE))
+    hub.light.on(Color.GREEN)
+    wait(100)
+    hub.light.off()
+    wait(400)</code></pre>
+</div>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>test-canal-recuperador.py — en el HUB 2</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code>from pybricks.hubs import PrimeHub
+from pybricks.pupdevices import Motor
+from pybricks.parameters import Port, Direction
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
+from umath import atan2, degrees, sqrt
+
+hub = PrimeHub(observe_channels=[1])
+
+motor_izq = Motor(Port.A, Direction.COUNTERCLOCKWISE)
+motor_der = Motor(Port.B)
+robot = DriveBase(motor_izq, motor_der, wheel_diameter=56, axle_track=112)
+
+# Esperar hasta recibir una coordenada.
+objetivo = None
+while objetivo is None:
+    objetivo = hub.ble.observe(1)
+    wait(50)
+
+x, y, clase = objetivo
+robot.reset()
+robot.turn(degrees(atan2(y, x)))   # girar hacia el punto
+robot.straight(sqrt(x * x + y * y)) # avanzar la distancia
+hub.speaker.beep(frequency=880, duration=400)</code></pre>
+</div>
+
+<div class="entrega-item bg-green-50 rounded-lg px-3 mb-6">
+  <span class="text-green-600">✓</span>
+  <span><strong>Si el recuperador maneja hacia el punto, el canal funciona.</strong> Recién ahora sumamos la cámara.</span>
+</div>
+
+<h2>📷 Paso 3 — La cámara con IA</h2>
+
+<p>
+  Abrí la herramienta <a href={`${base}/deteccion-objeto`} class="text-orange-600 font-semibold underline">Detección de objetos</a>
+  en <strong>Chrome en Android</strong>. Pegá el link de tu modelo, cargá <code>explorador.py</code> en el hub
+  y seguí los pasos de la página. El teléfono le manda al hub <strong>4 datos</strong>:
+</p>
+
+<div class="overflow-x-auto mb-6">
+  <table class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="bg-slate-800 text-white">
+        <th class="text-left px-4 py-2 rounded-tl-lg">Dato</th>
+        <th class="text-left px-4 py-2">Rango</th>
+        <th class="text-left px-4 py-2 rounded-tr-lg">Qué significa</th>
+      </tr>
+    </thead>
+    <tbody>
+      {[
+        ['clase', '0-255', 'Qué objeto ve (índice del modelo)'],
+        ['confianza', '0-100', 'Qué tan segura está la IA'],
+        ['cx', '0-100', 'Centro horizontal del objeto (50 = centrado)'],
+        ['area', '0-100', 'Tamaño del objeto (más grande = más cerca)'],
+      ].map(([dato, rango, desc], i) => (
+        <tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+          <td class="px-4 py-2 font-mono text-xs text-orange-700">{dato}</td>
+          <td class="px-4 py-2 text-gray-500 text-xs">{rango}</td>
+          <td class="px-4 py-2 text-gray-700">{desc}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<div class="tip">
+  <p class="tip-title">🎯 ¿Por qué fijar un color?</p>
+  <p>
+    Teachable Machine te dice <em>qué</em> objeto es, pero no <em>dónde</em> está en la imagen. Por eso la
+    página también detecta el <strong>color</strong> que fijaste, para calcular el <code>cx</code> (centro) y
+    poder apuntar el robot. Elegí un objeto con un color bien distinto del fondo.
+  </p>
+</div>
+
+<h2>🤖 Paso 4 — El explorador</h2>
+
+<p>
+  El explorador hace 4 cosas en orden: <strong>busca</strong> girando, <strong>centra</strong> el objeto en la
+  cámara, se <strong>acerca</strong>, y <strong>transmite</strong> la coordenada. Mientras tanto lleva la cuenta
+  de su posición con odometría.
+</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>explorador.py (resumen — el archivo completo está en programs/)</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code>from umath import sin, cos, radians
+
+CLASE_OBJETIVO = 1   # el índice de TU objeto en el modelo
+app = AppData([(0, 4)])  # 4 bytes: clase, confianza, cx, area
+
+# Pose propia (x, y en mm), integrada desde la odometría:
+def actualizar_pose():
+    global x, y, _d_prev
+    d = robot.distance()
+    rumbo = robot.angle()
+    paso = d - _d_prev
+    x += paso * cos(radians(rumbo))
+    y += paso * sin(radians(rumbo))
+    _d_prev = d
+    return rumbo
+
+# 1) buscar girando hasta reconocer el objeto
+# 2) centrar: girar hasta que cx este cerca de 50
+# 3) acercarse hasta que area sea grande
+# 4) calcular (obj_x, obj_y) y transmitir:
+hub.ble.broadcast((obj_x, obj_y, CLASE_OBJETIVO))</code></pre>
+</div>
+
+<div class="warning">
+  <p class="warning-title">⚠️ Probá que pueda transmitir con el teléfono conectado</p>
+  <p>
+    El explorador habla con el teléfono <em>y</em> transmite al otro robot al mismo tiempo. En algunos hubs
+    eso puede dar problemas. Si el recuperador no recibe, probá esta variante: primero ubicar el objeto,
+    después <strong>desconectar el teléfono</strong>, y recién ahí transmitir.
+  </p>
+</div>
+
+<h2>🦾 Paso 5 — El recuperador</h2>
+
+<p>
+  Igual que en la prueba de canal, pero ahora la coordenada es real y al llegar cierra la garra.
+</p>
+
+<div class="bg-zinc-900 rounded-2xl overflow-hidden mb-4">
+  <div class="flex items-center justify-between px-4 py-2 bg-zinc-800 text-zinc-400 text-xs">
+    <span>recuperador.py (la parte de la garra)</span>
+  </div>
+  <pre class="p-4 text-sm text-zinc-100 overflow-x-auto"><code># Garra en el puerto C
+garra = Motor(Port.C)
+
+# ... despues de navegar hasta (tx, ty) ...
+
+# Cerrar la garra hasta que encuentra resistencia (el objeto):
+garra.run_until_stalled(300, duty_limit=50)
+hub.speaker.beep(frequency=880, duration=400)</code></pre>
+</div>
+
+<div class="tip">
+  <p class="tip-title">🔧 Si el robot no llega justo al objeto</p>
+  <p>
+    La odometría acumula error. Calibrá <code>wheel_diameter</code> y <code>axle_track</code> (challenge 02),
+    usá tramos cortos, y dejá que la garra sea un poco más ancha para perdonar unos centímetros.
+  </p>
+</div>
+
+<!-- Entrega -->
+<div class="entrega-box">
+  <h2>✅ Lista de entrega — Challenge 06</h2>
+  <div class="space-y-2 mt-3">
+    {[
+      'Entrenaron un modelo en Teachable Machine que reconoce el objeto',
+      'La prueba de canal funciona: el recuperador maneja a la coordenada fija',
+      'La página le manda al hub los 4 datos correctos (visto en el registro técnico)',
+      'El explorador busca, centra y transmite la posición del objeto',
+      'El recuperador llega al objeto (±5 cm) y lo agarra con la garra',
+      'Probaron que el explorador puede transmitir con el teléfono conectado',
+    ].map(item => (
+      <div class="entrega-item">
+        <span class="text-green-400 flex-shrink-0">☐</span>
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div class="bonus-box">
+  <h2>⭐ Bonus</h2>
+  <ul class="space-y-2 list-none">
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Varios objetos:</strong> entrená el modelo con 2 o 3 objetos distintos y que el explorador transmita también la clase, para que el recuperador sepa cuál agarró.</span>
+    </li>
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Confirmación:</strong> que el recuperador transmita de vuelta "objeto recuperado" en otro canal y el explorador festeje con luces.</span>
+    </li>
+    <li class="flex items-start gap-2 text-sm">
+      <span class="text-purple-400">▸</span>
+      <span><strong>Sin color:</strong> entrená 3 clases ("izquierda", "centro", "derecha") y centrá el objeto usando solo la IA, sin fijar color.</span>
+    </li>
+  </ul>
+</div>
